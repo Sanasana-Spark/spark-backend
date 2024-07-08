@@ -1,28 +1,19 @@
-from flask import Flask
-from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
-from config import SECRET_KEY, UPLOAD_FOLDER, Config
-from flask_jwt_extended import JWTManager
-from flask_mail import Mail
-from .views.auth import login_manager, auth_bp
+import os
 
 
-def create_app(config_object=Config):
-    app = Flask(__name__)
-    CORS(app)
-    app.config.from_object(config_object)
-    register_blueprints(app)
-    login_manager.init_app(app)
-    app.secret_key = SECRET_KEY
-    app.config['JWT_SECRET_KEY'] = SECRET_KEY
-    
-    mail = Mail(app)
-    jwt = JWTManager(app)
-    db = SQLAlchemy(app)
-    
-    return app
 
 
-def register_blueprints(app):
-    from .views import *
-    app.register_blueprint(auth_bp)
+
+class Config:
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
+    AUTHORIZATION_URL = os.environ.get("auth_uri", None)
+    GOOGLE_DISCOVERY_URL = (
+        "https://accounts.google.com/.well-known/openid-configuration"
+    )
+    SECRET_KEY = os.environ.get("secret_key", None)
+    UPLOAD_FOLDER = 'resiix/images/'
