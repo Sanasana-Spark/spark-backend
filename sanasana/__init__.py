@@ -22,5 +22,6 @@ def create_app(config_class=Config):
 
 
 def register_blueprints(app):
-    from .views import assets
+    from .views import assets, operators
     app.register_blueprint(assets.bp)
+    app.register_blueprint(operators.bp)
