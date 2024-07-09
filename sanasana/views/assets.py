@@ -6,11 +6,6 @@ from sanasana.models.assets import Asset
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
 
-@bp.route('/old')
-def get_assetsss():
-    assets = Asset.query.all()
-    assets_list = [{'id': asset.id, 'name': asset.a_name} for asset in assets]  # Adjust based on your Asset model attributes
-    return jsonify(assets_list)
 
 @bp.route('/')
 def get_assets():
