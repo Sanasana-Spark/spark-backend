@@ -9,12 +9,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    firm_id = db.Column(db.String(), nullable=False)
 
     def __repr__(self):
         return f'<User {self.username}>'
     
 
-class Firm(db.Model):
+class Organization(db.Model):
     __tablename__ = 'firm'  # Name of the table
     __table_args__ = {'schema': 'users'}  # Specify the schema
 

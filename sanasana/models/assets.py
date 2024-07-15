@@ -2,7 +2,7 @@ from sanasana import db
 
 
 class Asset(db.Model):
-    __tablename__ = 'asset'  # Name of the table
+    __tablename__ = 'assets'  # Name of the table
     __table_args__ = {'schema': 'assets'}  # Specify the schema
 
     id = db.Column(db.Integer, primary_key=True)
