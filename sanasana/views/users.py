@@ -12,13 +12,15 @@ bp = Blueprint('organizations', __name__, url_prefix='/organizations')
 def create_organization():
     data = request.json
     user_id = data['userId']
+    user_name = data['userName']
+    email = data['email']
     organization_id = data['organizationId']
     organization_name = data['organizationName']
 
     organization = Organization(id=organization_id, name=organization_name)
     db.add(organization)
     
-    user = User(id=user_id, organization_id=organization_id)
+    user = User(id=user_id, username=user_name, email=email, firm_id=organization_id )
     db.add(user)
     db.commit()
 

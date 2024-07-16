@@ -1,4 +1,5 @@
 from sanasana import db
+from sqlalchemy import func
 
 
 class Operator(db.Model):
@@ -6,6 +7,9 @@ class Operator(db.Model):
     __table_args__ = {'schema': 'assets'}  # Specify the schema
 
     id = db.Column(db.Integer, primary_key=True)
+    o_organisation_id = db.Column(db.String, db.ForeignKey('users.organization.id'), nullable=False)
+    o_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    o_created_at = db.Column(db.DateTime, nullable=False, default=func.now())
     o_name = db.Column(db.String(100), nullable=False)
     o_email = db.Column(db.String(120), unique=True, nullable=False)
     o_phone = db.Column(db.String(100), nullable=True)

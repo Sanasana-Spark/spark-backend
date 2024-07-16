@@ -1,12 +1,14 @@
 from sanasana import db
-
+from sqlalchemy import func
 
 class Trip(db.Model):
     __tablename__ = 'trips'  # Name of the table
     __table_args__ = {'schema': 'assets'}  # Specify the schema
 
     id = db.Column(db.Integer, primary_key=True) 
-    t_firm_id = db.Column(db.Integer,  db.ForeignKey('users.firm.id'), nullable=False) 
+    t_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    t_created_at = db.Column(db.DateTime, nullable=False, default=func.now())
+    t_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
     t_type = db.Column(db.String(100), nullable=False)
     t_start_lat = db.Column(db.Numeric, nullable=False)
     t_start_long = db.Column(db.Numeric, nullable=False)
