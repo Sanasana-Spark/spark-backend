@@ -6,7 +6,7 @@ import os
 from sanasana.views.db import get_db as db
 from sanasana.models.trips import Trip
 
-bp = Blueprint('assets', __name__, url_prefix='/assets')
+bp = Blueprint('trips', __name__, url_prefix='/trips')
 
 
 @bp.route('/')
@@ -20,7 +20,7 @@ def get_trips():
 def add_trip():
     data = request.form.to_dict()
     files = request.files
-    
+
 
     required_fields = []
 
