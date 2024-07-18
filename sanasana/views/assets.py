@@ -19,42 +19,44 @@ def get_assets():
 @bp.route('/create', methods=['POST'])
 def add_asset():
     try:
-        data = request.form.to_dict()
+        data = request.json
         files = request.files
 
         required_fields = [
-            'a_name', 'a_make', 'a_model', 'a_year', 'a_license_plate',
+            "a_name", 'a_make', 'a_model', 'a_year', 'a_license_plate',
             'a_type', 'a_engine_size', 'a_tank_size', 'a_fuel_type', 'a_cost',
-            'a_value', 'a_status',  'a_efficiency_rate'
+            'a_value', 'a_status',  'a_efficiency_rate', 'a_created_by',
+            'a_organisation_id'
         ]
-
-        missing_fields = [field for field in required_fields if field not in data]
+        data = {k.strip().lower(): v for k, v in data.items()}
+        required_fields_normalized = [field.lower() for field in required_fields]
+        missing_fields = [field for field in required_fields_normalized if field not in data]
 
         if missing_fields:
             return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
 
         new_asset = Asset(
-            a_name=data['a_name'],
-            a_make=data['a_make'],
-            a_model=data['a_model'],
-            a_year=int(data['a_year']),
-            a_license_plate=data['a_license_plate'],
-            a_type=data['a_type'],
-            a_msrp=float(data['a_msrp']),
-            a_chasis_no=data['a_chasis_no'],
-            a_engine_size=float(data['a_engine_size']),
-            a_tank_size=float(data['a_tank_size']),
-            a_efficiency_rate=float(data['a_efficiency_rate']),
-            a_fuel_type=data['a_fuel_type'],
-            a_cost=float(data['a_cost']),
-            a_value=float(data['a_value']),
-            a_depreciation_rate=float(data['a_depreciation_rate']),
-            a_apreciation_rate=float(data['a_apreciation_rate']),
-            a_accumulated_dep=float(data['a_accumulated_dep']),
-            a_status=data['a_status'],
-            a_owner_id=int(data['a_owner_id'])
-        )
-
+            a_name=data.get('a_name', ''),
+            a_make=data.get('a_make', ''),
+            a_model=data.get('a_model', ''),
+            a_year=int(data.get('a_year', 0)),
+            a_license_plate=data.get('a_license_plate', ''),
+            a_type=data.get('a_type', ''),        
+            a_chasis_no=data.get('a_chasis_no', ''),
+            a_msrp=float(data.get('a_msrp', 0)),
+            a_engine_size=float(data.get('a_engine_size', 0)),
+            a_tank_size=float(data.get('a_tank_size', 0)),
+            a_efficiency_rate=float(data.get('a_efficiency_rate', 0)),
+            a_fuel_type=data.get('a_fuel_type', ''),
+            a_cost=float(data.get('a_cost', 0)),
+            a_value=float(data.get('a_value', 0)),
+            a_depreciation_rate=float(data.get('a_depreciation_rate', 0)),
+            a_apreciation_rate=float(data.get('a_apreciation_rate', 0)),
+            a_accumulated_dep=float(data.get('a_accumulated_dep', 0)),
+            a_status=data.get('a_status', ''),
+            a_created_by=data.get('a_created_by', ''),
+            a_organisation_id=data.get('a_organisation_id', '')
+        ) 
         if 'a_image' in files:
             image_file = files['a_image']
             image_filename = secure_filename(image_file.filename)

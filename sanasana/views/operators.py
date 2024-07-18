@@ -19,34 +19,35 @@ def get_operators():
 @bp.route('/create', methods=['POST'])
 def add_operator():
     try:
-        data = request.form.to_dict()
+        data = request.json
         files = request.files
 
         required_fields = [
             'o_organisation_id', 'o_created_by', 'o_name', 'o_national_id'
         ]
-
-        missing_fields = [field for field in required_fields if field not in data]
+        data = {k.strip().lower(): v for k, v in data.items()}
+        required_fields_normalized = [field.lower() for field in required_fields]
+        missing_fields = [field for field in required_fields_normalized if field not in data]
 
         if missing_fields:
             return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
 
         new_operator = Operator(
-            o_organisation_id=data['o_organisation_id'],
-            o_created_by=data['o_created_by'],
-            o_name=data['o_name'],
-            o_email=data['o_email'],
-            o_phone=data['o_phone'],
-            o_national_id=data['o_national_id'],
-            o_lincense_id=data['o_lincense_id'],
-            o_lincense_type=data['o_lincense_type'],
-            o_lincense_expiry=data['o_lincense_expiry'],
-            o_payment_card_id=data['o_payment_card_id'],
-            o_Payment_card_no=data['o_Payment_card_no'],
-            o_role=data['o_role'],
-            o_status=data['o_status'],
-            o_cum_mileage=float(data['o_cum_mileage']),
-            o_expirence=float(data['o_expirence']),
+            o_organisation_id=data.get('o_organisation_id', ''),
+            o_created_by=data.get('o_created_by', ''),
+            o_name=data.get('o_name', ''),
+            o_email=data.get('o_email'),
+            o_phone=data.get('o_phone',),
+            o_national_id=data.get('o_national_id'),
+            o_lincense_id=data.get('o_lincense_id'),
+            o_lincense_type=data.get('o_lincense_type'),
+            o_lincense_expiry=data.get('o_lincense_expiry'),
+            o_payment_card_id=data.get('o_payment_card_id'),
+            o_Payment_card_no=data.get('o_Payment_card_no') ,
+            o_role=data.get('o_role', ''),
+            o_status=data.get('o_status', ''),
+            o_cum_mileage=float(data.get('o_cum_mileage', 0)),
+            o_expirence=float(data.get('o_expirence', 0))
         )
 
         if 'o_image' in files:

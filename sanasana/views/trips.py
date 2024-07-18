@@ -54,3 +54,11 @@ def add_trip():
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/distance')
+def calculate_distance():
+    return 1
+
+
+@bp.route('/fuel')
+def calculate_fuel():
+    return 1
