@@ -22,8 +22,9 @@ def create_app(config_class=Config):
 
 
 def register_blueprints(app):
-    from .views import assets, operators, users
+    from .views import assets, operators, users, trips
     app.register_blueprint(assets.bp)
     app.register_blueprint(operators.bp)
     app.register_blueprint(users.bp)
+    app.register_blueprint(trips.bp)
 
