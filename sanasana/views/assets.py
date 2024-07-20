@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models.assets import Asset
+from sanasana.models.assets import Asset, Status
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
 
@@ -16,6 +16,13 @@ def get_assets():
     return jsonify(assets_list)
 
 
+@bp.route('/status')
+def get_assets_status():
+    assets_status = Status.query.all()
+    status_list = [status.as_dict() for status in assets_status]
+    return jsonify(status_list)
+
+
 @bp.route('/create', methods=['POST'])
 def add_asset():
     try:
@@ -24,7 +31,7 @@ def add_asset():
 
         required_fields = [
             "a_name", 'a_make', 'a_model', 'a_year', 'a_license_plate',
-            'a_type', 'a_engine_size', 'a_tank_size', 'a_fuel_type', 'a_cost',
+             'a_engine_size', 'a_tank_size', 'a_fuel_type', 'a_cost',
             'a_value', 'a_status',  'a_efficiency_rate', 'a_created_by',
             'a_organisation_id'
         ]

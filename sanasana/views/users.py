@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from .. import db
 from sanasana.models.users import User, Organization
+import logging
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
 
@@ -70,14 +71,21 @@ def invite_user():
     return jsonify({'message': 'User invited successfully'})
 
 
-@bp.route('/organizations/<user_id>', methods=['GET'])
-def get_organization(user_id):
-    user = User.query(User).filter(User.id == user_id).first()
-    if user and user.firm_id:
-        organization = Organization.query(Organization).filter(Organization.id == user.firm_id).first()
+@bp.route('/organizations/<userId>', methods=['GET'])
+def get_organization(userId):
+    user = User.query(User).filter(User.id == userId).first()
+    if user and user.organization_id:
+        organization = Organization.query(Organization).filter(Organization.id == user.organization_id).first()
+        # if organization:
+        #     return jsonify({
+        #         'id': organization.id,
+        #         'org_name': organization.org_name
+        #     })
         if organization:
-            return jsonify({
-                'id': Organization.id,
-                'name': Organization.f_name,
-            })
+            response = {
+                'id': organization.id,
+                'org_name': organization.org_name
+            }
+            logging.info(f'Response: {response}')  # Add logging
+            return 3
     return jsonify({'error': 'Organization not found'}), 404
