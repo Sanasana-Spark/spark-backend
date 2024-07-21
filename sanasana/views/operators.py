@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models.operators import Operator
+from sanasana.models.operators import Operator, Ostatus
 
 bp = Blueprint('operators', __name__, url_prefix='/operators')
 
@@ -14,6 +14,19 @@ def get_operators():
     operators = Operator.query.all()
     data = [operator.as_dict() for operator in operators]
     return jsonify(data)
+
+
+@bp.route('/<operatorId>', methods=['GET'])
+def get_operatorsById(operatorId):
+    operator = Operator.query(Operator).filter(Operator.id == operatorId).first()
+    return jsonify(operator)
+
+
+@bp.route('/status')
+def get_operator_status():
+    operator_status = Ostatus.query.all()
+    status_list = [status.as_dict() for status in operator_status]
+    return jsonify(status_list)
 
 
 @bp.route('/create', methods=['POST'])

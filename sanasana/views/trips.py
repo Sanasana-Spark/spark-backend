@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import  db
-from sanasana.models.trips import Trip
+from sanasana.models.trips import Trip, Tstatus
 
 bp = Blueprint('trips', __name__, url_prefix='/trips')
 
@@ -14,6 +14,13 @@ def get_trips():
     trips = Trip.query.all()
     trips_list = [trip.as_dict() for trip in trips]
     return jsonify(trips_list)
+
+
+@bp.route('/status')
+def get_trip_status():
+    trip_status = Tstatus.query.all()
+    status_list = [status.as_dict() for status in trip_status]
+    return jsonify(status_list)
 
 
 @bp.route('/create', methods=['POST'])

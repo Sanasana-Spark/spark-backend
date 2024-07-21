@@ -47,3 +47,19 @@ class Trip(db.Model):
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
+    
+class Tstatus(db.Model):
+    __tablename__ = 'tstatus'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    t_name = db.Column(db.String(200), nullable=True)
+    t_name_code = db.Column(db.String(200), nullable=True)
+
+    def __repr__(self):
+        return f'<Status {self.t_name}>' 
+
+    # This method converts the model instance to a dictionary
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
