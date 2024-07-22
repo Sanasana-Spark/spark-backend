@@ -33,3 +33,18 @@ class Operator(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
+class Ostatus(db.Model):
+    __tablename__ = 'ostatus'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    o_name = db.Column(db.String(200), nullable=True)
+    o_name_code = db.Column(db.String(200), nullable=True)
+
+    def __repr__(self):
+        return f'<Status {self.o_name}>' 
+
+    # This method converts the model instance to a dictionary
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}

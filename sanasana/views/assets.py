@@ -15,6 +15,11 @@ def get_assets():
     assets_list = [asset.as_dict() for asset in assets]
     return jsonify(assets_list)
 
+@bp.route('/<assetId>', methods=['GET'])
+def get_asset(assetId):
+    asset = Asset.query(Asset).filter(Asset.id == assetId).first()
+    return jsonify(asset)
+
 
 @bp.route('/status')
 def get_assets_status():
