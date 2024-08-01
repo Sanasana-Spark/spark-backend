@@ -15,6 +15,16 @@ def get_trips():
     trips_list = [trip.as_dict() for trip in trips]
     return jsonify(trips_list)
 
+@bp.route('/<userEmail>', methods=['GET'])
+def get_tripByUser(userEmail):
+    trip = Trip.query(Trip).filter(Trip.t_o_email == userEmail).first()
+    return jsonify(trip)
+
+
+def get_trip_column(trip_id, column_name):
+    trip = Trip.query.get(trip_id)
+    return getattr(trip, column_name, None) if trip else None
+
 
 @bp.route('/status')
 def get_trip_status():

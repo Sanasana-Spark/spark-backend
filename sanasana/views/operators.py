@@ -16,6 +16,11 @@ def get_operators():
     return jsonify(data)
 
 
+def get_operator_column(operator_id, column_name):
+    operator = Operator.query.get(operator_id)
+    return getattr(operator, column_name, None) if operator else None
+
+
 @bp.route('/<operatorId>', methods=['GET'])
 def get_operatorsById(operatorId):
     operator = Operator.query(Operator).filter(Operator.id == operatorId).first()
