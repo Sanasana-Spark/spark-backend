@@ -1,5 +1,8 @@
 from sanasana import db
 from sqlalchemy import func
+from .assets import Asset
+from .operators import Operator
+
 
 class Trip(db.Model):
     __tablename__ = 'trips'  # Name of the table
@@ -40,12 +43,21 @@ class Trip(db.Model):
     t_odometer_image3 = db.Column(db.String(200), nullable=True)
     t_odometer_image4 = db.Column(db.String(200), nullable=True)
     t_odometer_image5 = db.Column(db.String(200), nullable=True)
+    operator = db.relationship('Operator', backref='trips')
+    asset = db.relationship('Asset', backref='trips')
 
     def __repr__(self):
         return f'<Trips {self.id}>' 
 
+    # def as_dict(self):
+    #     return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
     def as_dict(self):
-        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['t_operator_name'] = self.operator.o_name if self.operator else None
+        result['t_o_email'] = self.operator.o_email if self.operator else None
+        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        return result
     
     
 class Tstatus(db.Model):
@@ -62,4 +74,3 @@ class Tstatus(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    

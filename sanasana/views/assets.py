@@ -28,6 +28,11 @@ def get_assets_status():
     return jsonify(status_list)
 
 
+def get_asset_column(asset_id, column_name):
+    asset = Asset.query.get(asset_id)
+    return getattr(asset, column_name, None) if asset else None
+
+
 @bp.route('/create', methods=['POST'])
 def add_asset():
     try:
@@ -67,7 +72,8 @@ def add_asset():
             a_accumulated_dep=float(data.get('a_accumulated_dep', 0)),
             a_status=data.get('a_status', ''),
             a_created_by=data.get('a_created_by', ''),
-            a_organisation_id=data.get('a_organisation_id', '')
+            a_organisation_id=data.get('a_organisation_id', ''),
+            a_attached_card=data.get('a_attached_card')
         ) 
         if 'a_image' in files:
             image_file = files['a_image']

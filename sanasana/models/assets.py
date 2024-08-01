@@ -31,6 +31,7 @@ class Asset(db.Model):
     a_attachment2 = db.Column(db.String(200), nullable=True)
     a_attachment3 = db.Column(db.String(200), nullable=True)
     a_status = db.Column(db.String(50), nullable=False)
+    a_attached_card = db.Column(db.Integer, db.ForeignKey('assets.cards.id'), nullable=True)
 
     def __repr__(self):
         return f'<Asset {self.a_name}>' 
