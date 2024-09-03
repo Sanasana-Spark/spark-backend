@@ -1,5 +1,6 @@
 from sanasana import db
 from sqlalchemy import func
+from .assets import Asset
 
 
 class Operator(db.Model):
@@ -26,14 +27,18 @@ class Operator(db.Model):
     o_cum_mileage = db.Column(db.Numeric(), nullable=True)
     o_expirence = db.Column(db.Numeric(), nullable=True)
     o_attachment1 = db.Column(db.String(200), nullable=True)
+    asset = db.relationship('Asset', backref='operator')
 
     def __repr__(self):
         return f'<Operators {self.o_national_id}>' 
 
     # This method converts the model instance to a dictionary
     def as_dict(self):
-        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['o_a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        return result
     
+
 class Ostatus(db.Model):
     __tablename__ = 'ostatus'  # Name of the table
     __table_args__ = {'schema': 'assets'}  # Specify the schema
