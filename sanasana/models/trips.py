@@ -9,6 +9,14 @@ class Trip(db.Model):
     __table_args__ = {'schema': 'assets'}  # Specify the schema
 
     id = db.Column(db.Integer, primary_key=True) 
+    t_origin_place_id = db.Column(db.String(255), nullable=True)
+    t_origin_place_query = db.Column(db.String(255), nullable=True)
+    t_destination_place_id = db.Column(db.String(255), nullable=True)
+    t_destination_place_query = db.Column(db.String(255), nullable=True)
+    t_distance = db.Column(db.String(50), nullable=True)
+    t_duration = db.Column(db.String(50), nullable=True)
+    t_directionsResponse = db.Column(db.JSON, nullable=True)
+
     t_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
     t_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
     t_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
@@ -19,7 +27,6 @@ class Trip(db.Model):
     t_end_lat = db.Column(db.Numeric, nullable=False)
     t_end_long = db.Column(db.Numeric, nullable=False)
     t_end_elavation = db.Column(db.Numeric, nullable=True)
-    t_distance = db.Column(db.Float, nullable=True)
     t_start_date = db.Column(db.DateTime, nullable=True)
     t_end_date = db.Column(db.DateTime, nullable=True)
     t_operator_id = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
