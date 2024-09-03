@@ -56,6 +56,8 @@ class Trip(db.Model):
         result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
         result['t_operator_name'] = self.operator.o_name if self.operator else None
         result['t_o_email'] = self.operator.o_email if self.operator else None
+        result['t_a_make'] = self.asset.a_make if self.asset else None
+        result['t_a_model'] = self.asset.a_model if self.asset else None
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
         return result
     
