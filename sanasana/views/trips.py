@@ -80,6 +80,27 @@ def add_trip():
         return jsonify({'error': str(e)}), 500
 
 
+@bp.route('/<int:trip_id>', methods=['PUT'])
+def update_trip(trip_id):
+    trip = Trip.query.get(trip_id)   
+    if not trip:
+        return jsonify({'error': 'Trip not found'}), 404
+    try:
+        data = request.get_json()
+        # Loop through each attribute and value in the JSON data
+        for attribute, value in data.items():
+            if hasattr(trip, attribute):
+                setattr(trip, attribute, value)
+            else:
+                return jsonify({'error': f'Invalid attribute: {attribute}'}), 400
+        db.session.commit()
+        return jsonify({'message': 'Trip updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()  # Rollback in case of any errors
+        return jsonify({'error': 'Failed to update trip' + str(e)}), 500
+    
+
+
 @bp.route('/distance')
 def calculate_distance():
     return 1
