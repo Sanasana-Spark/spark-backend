@@ -2,6 +2,7 @@ from sanasana import db
 from sqlalchemy import func
 from .assets import Asset
 from .operators import Operator
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 class Trip(db.Model):
@@ -15,17 +16,17 @@ class Trip(db.Model):
     t_destination_place_query = db.Column(db.String(255), nullable=True)
     t_distance = db.Column(db.String(50), nullable=True)
     t_duration = db.Column(db.String(50), nullable=True)
-    t_directionsResponse = db.Column(db.JSON, nullable=True)
+    t_directionsResponse = db.Column(JSONB, nullable=True)
 
     t_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
     t_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
     t_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
     t_type = db.Column(db.String(100), nullable=True)
-    t_start_lat = db.Column(db.Numeric, nullable=False)
-    t_start_long = db.Column(db.Numeric, nullable=False)
+    t_start_lat = db.Column(db.Numeric, nullable=True)
+    t_start_long = db.Column(db.Numeric, nullable=True)
     t_start_elavation = db.Column(db.Numeric, nullable=True)
-    t_end_lat = db.Column(db.Numeric, nullable=False)
-    t_end_long = db.Column(db.Numeric, nullable=False)
+    t_end_lat = db.Column(db.Numeric, nullable=True)
+    t_end_long = db.Column(db.Numeric, nullable=True)
     t_end_elavation = db.Column(db.Numeric, nullable=True)
     t_start_date = db.Column(db.DateTime, nullable=True)
     t_end_date = db.Column(db.DateTime, nullable=True)
