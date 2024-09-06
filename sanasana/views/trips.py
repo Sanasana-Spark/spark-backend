@@ -37,8 +37,7 @@ def get_trip_status():
 def add_trip():
     try:
         data = request.json
-        required_fields = ['t_start_lat', 't_start_long', 't_end_lat', 't_end_long',
-                           't_organization_id', 't_created_by']
+        required_fields = ['t_organization_id', 't_created_by', 't_directionsResponse']
         data = {k.strip().lower(): v for k, v in data.items()}
         required_fields_normalized = [field.lower() for field in required_fields]
         missing_fields = [field for field in required_fields_normalized if field not in data]
@@ -56,13 +55,20 @@ def add_trip():
             t_end_lat=data.get('t_end_lat'),
             t_end_long=data.get('t_end_long'),
             t_end_elavation=data.get('t_end_elavation'),
-            t_distance=float(data['t_distance']) if 't_distance' in data else None,
             t_start_date=data.get('t_start_date'),
             t_end_date=data.get('t_end_date'),
             t_operator_id=data.get('t_operator_id'),
             t_asset_id=data.get('t_asset_id'),
             t_status=data.get('t_status'),
-            t_load=data.get('t_load')
+            t_load=data.get('t_load'),
+            t_origin_place_id=data.get('t_origin_place_id'),
+            t_origin_place_query=data.get('t_origin_place_query'),
+            t_destination_place_id=data.get('t_destination_place_id'),
+            t_destination_place_query=data.get('t_destination_place_query'),
+            t_directionsResponse=data.get('t_directionsResponse'),      
+            t_distance=data.get('t_distance') if 't_distance' in data else None,
+            t_duration=data.get('t_duration'),
+
         )
 
         db.session.add(new_trip)
