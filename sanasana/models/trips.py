@@ -62,11 +62,13 @@ class Trip(db.Model):
     
     def as_dict(self):
         result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
-        result['t_operator_name'] = self.operator.o_name if self.operator else None
-        result['t_o_email'] = self.operator.o_email if self.operator else None
-        result['t_a_make'] = self.asset.a_make if self.asset else None
-        result['t_a_model'] = self.asset.a_model if self.asset else None
+        result['o_name'] = self.operator.o_name if self.operator else None
+        result['o_email'] = self.operator.o_email if self.operator else None
+        result['a_make'] = self.asset.a_make if self.asset else None
+        result['a_model'] = self.asset.a_model if self.asset else None
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
+        result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
         return result
     
     
@@ -84,3 +86,50 @@ class Tstatus(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+  
+
+def all():
+    return Trip.query.all()
+
+
+def get_trip_by_id(trip_id):
+    act = Trip.query.filter_by(
+        id=trip_id
+    ).first()
+    return act
+
+
+def get_trip_by_status(t_status):
+    act = Trip.query.filter_by(
+     t_status=t_status
+    ).all()
+    return act
+
+
+def get_trip_by_id_status(trip_id, t_status):
+    act = Trip.query.filter_by(
+        id=trip_id, t_status=t_status
+    ).first()
+    return act
+
+
+def update_status(trip_id, t_status):
+    trip = Trip.query.filter_by(
+        id=trip_id
+    ).first()
+    trip.t_status = t_status
+    db.session.add(trip)
+    db.session.commit()
+    return trip
+
+
+def update(trip_id, data):
+    trip = Trip.query.filter_by(
+        id=trip_id
+    ).first()
+    # if data['attr'] == "resolved" and data["value"]:
+    #     issue.resolved_date = datetime.datetime.utcnow()
+    setattr(trip, data['attr'], data['value'])
+    db.session.add(trip)
+    db.session.commit()
+    return trip

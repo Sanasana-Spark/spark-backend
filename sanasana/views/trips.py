@@ -1,19 +1,78 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, abort
 )
 from werkzeug.utils import secure_filename
 import os
 from .. import  db
-from sanasana.models.trips import Trip, Tstatus
+from sanasana.models import trips as qtrip
+from flask_restful import Api, Resource
 
 bp = Blueprint('trips', __name__, url_prefix='/trips')
 
+api_trips = Api(bp)
 
-@bp.route('/')
-def get_trips():
-    trips = Trip.query.all()
-    trips_list = [trip.as_dict() for trip in trips]
-    return jsonify(trips_list)
+
+class AllTrips(Resource):
+    def get(self):
+        """ list all trips """
+        trips = [trips.as_dict() for trips in qtrip.all()]
+        return jsonify(trips=trips)
+    
+
+class TripByStatus(Resource):
+    def get(self, t_status):
+        """ list all trips """
+        trips = [trips.as_dict() for trips in
+                 qtrip.get_trip_by_status(t_status)]
+        return jsonify(trips=trips)
+
+
+class Trip(Resource):
+    def get(self, trip_id):
+        """ get trip by id """
+        if trip_id is None:
+            return abort(404)
+        trip = qtrip.get_trip_by_id(trip_id)    
+        return jsonify(trip=trip)
+
+    def post(self, trip_id):
+        """ Add an trip """
+        if trip_id is None:
+            return abort(404)
+        data = request.get_json()
+        new_trip = Trip(
+            t_organization_id=data.get('t_organization_id'),
+            t_created_by=data.get('t_created_by'),
+            t_type=data.get('t_type'),
+            t_start_lat=data.get('t_start_lat'),
+            t_start_long=data.get('t_start_long'),
+            t_start_elavation=data.get('t_start_elavation'),
+            t_end_lat=data.get('t_end_lat'),
+            t_end_long=data.get('t_end_long'),
+            t_end_elavation=data.get('t_end_elavation'),
+            t_start_date=data.get('t_start_date'),
+            t_end_date=data.get('t_end_date'),
+            t_operator_id=data.get('t_operator_id'),
+            t_asset_id=data.get('t_asset_id'),
+            t_status=data.get('t_status'),
+            t_load=data.get('t_load'),
+            t_origin_place_id=data.get('t_origin_place_id'),
+            t_origin_place_query=data.get('t_origin_place_query'),
+            t_destination_place_id=data.get('t_destination_place_id'),
+            t_destination_place_query=data.get('t_destination_place_query'),
+            t_directionsResponse=data.get('t_directionsResponse'),      
+            t_distance=data.get('t_distance') if 't_distance' in data else None,
+            t_duration=data.get('t_duration'),
+    )
+        db.session.add(new_trip)
+        db.session.commit()
+        trip = new_trip.as_dict()
+        return jsonify(**trip), 201
+
+
+api_trips.add_resource(AllTrips, '/')
+api_trips.add_resource(TripByStatus, '/status/<t_status>/')
+api_trips.add_resource(Trip, '/<trip_id>/')
 
 @bp.route('/<userEmail>', methods=['GET'])
 def get_tripByUser(userEmail):
@@ -82,7 +141,7 @@ def add_trip():
 
 @bp.route('/<int:trip_id>', methods=['PUT'])
 def update_trip(trip_id):
-    trip = Trip.query.get(trip_id)   
+    trip = get_trip_by_id(trip_id)
     if not trip:
         return jsonify({'error': 'Trip not found'}), 404
     try:

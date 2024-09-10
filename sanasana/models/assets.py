@@ -56,3 +56,10 @@ class Status(db.Model):
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
+
+def get_asset_by_id(trip_id):
+    act = Asset.query.filter_by(
+        id=trip_id
+    ).first()
+    return act
+    
