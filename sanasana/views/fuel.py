@@ -5,17 +5,23 @@ from werkzeug.utils import secure_filename
 import os
 from .. import db
 from sanasana.models.fuel import Fuel_request
+from sanasana.models import trips as qtrip
+from sanasana.models import assets as qasset
+from sanasana.models import fuel as qfuel_request
+from flask_restful import Api, Resource
+
 from .assets import get_asset_column
 from .trips import get_trip_column
 
 bp = Blueprint('fuel', __name__, url_prefix='/fuel')
+api_fuel = Api(bp)
 
 
-@bp.route('/')
-def get_fuel_request():
-    fuel_requests = Fuel_request.query.all()
-    data = [fuel_request.as_dict() for fuel_request in fuel_requests]
-    return jsonify(data)
+class AllFuelRequest(Resource):
+    def get(self):
+        fuel_requests = Fuel_request.query.all()
+        data = [fuel_request.as_dict() for fuel_request in fuel_requests]
+        return jsonify(data)
 
 
 def calculate_f_litres(distance, efficiency_rate, load):
@@ -35,84 +41,49 @@ def get_fuel_price(f_type):
     return fuel_price if fuel_price else None
 
 
-@bp.route('/create', methods=['POST'])
-def add_fuel_request():
-    try:
-        data = request.json
-        files = request.files
-
-        required_fields = [
-            'f_created_by', 'f_organization_id', 'f_operator_id', 'f_asset_id',
-            'f_trip_id'
-        ]
-        data = {k.strip().lower(): v for k, v in data.items()}
-        required_fields_normalized = [field.lower() for field in required_fields]
-        missing_fields = [field for field in required_fields_normalized if field not in data]
-
-        if missing_fields:
-            return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
-
-        f_asset_id = data.get('f_asset_id')
-        f_trip_id = data.get('f_trip_id')
-        f_distance = get_trip_column(f_trip_id, 't_distance')
-        f_load = get_trip_column(f_trip_id, 't_load')
-
-        # Retrieve necessary details for calculations
-        f_efficiency_rate = get_asset_column(f_asset_id, 'a_efficiency_rate')
-        f_type = get_asset_column(f_asset_id, 'a_fuel_type')
-        if not f_type:
-            return jsonify({"error": "Invalid asset id or asset does not have fuel type defined"}), 400
-
-        f_cost = get_fuel_price(f_type)
-        if f_cost is None:
-            return jsonify({"error": f"Fuel price not found for type: {f_type}"}), 400
-
-        f_litres = calculate_f_litres(f_distance, f_efficiency_rate, f_load)
-        f_total_cost = f_litres * f_cost
-
-        new_fuel_request = Fuel_request(
-            f_organization_id=data.get('f_organization_id', ''),
-            f_created_by=data.get('f_created_by', ''),
-            f_operator_id=data.get('f_operator_id', ''),
-            f_asset_id=f_asset_id,
-            f_trip_id=data.get('f_trip_id'),
-            f_card_id=data.get('f_card_id'),
-            f_type=f_type,
-            f_litres=f_litres,
-            f_cost=f_cost,
-            f_total_cost=f_total_cost,
-            f_distance=f_distance,
-            f_vendor=data.get('f_vendor', 'Total')
-        )
-
-        if 'f_odometer_image' in files:
-            image_file = files['f_odometer_image']
-            image_filename = secure_filename(image_file.filename)
-            image_path = os.path.join('images/assets', image_filename)
-            image_file.save(image_path)
-            new_fuel_request.f_odometer_image = image_path
-
-        if 'f_receipt_image' in files:
-            image_file = files['f_receipt_image']
-            image_filename = secure_filename(image_file.filename)
-            image_path = os.path.join('images/assets', image_filename)
-            image_file.save(image_path)
-            new_fuel_request.f_receipt_image = image_path
-
-        for attachment in ['f_receipt_pdf', 'a_attachment2', 'a_attachment3']:
-            if attachment in files:
-                file = files[attachment]
-                filename = secure_filename(file.filename)
-                file_path = os.path.join('images/assets', filename)
-                file.save(file_path)
-                setattr(new_fuel_request, attachment, file_path)
-
-        db.session.add(new_fuel_request)
-        db.session.commit()
-
-        return jsonify(new_fuel_request.as_dict()), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+class FuelRequest(Resource):
+    def post(self, trip_id):
+        trip = qtrip.get_trip_by_id(trip_id)
+        asset = qasset.get_asset_by_id(trip.t_asset_id)  
+        if not trip:
+            return jsonify({'error': 'Trip not found'}), 404
+        try:
+            data = request.json
+            trip_id = data["f_trip_id"]
+            t_status = data["t_status"]
+            # return jsonify(trip.as_dict()), 200
+            f_distance = float(trip.t_distance if trip.t_distance else "1")
+            f_load = trip.t_load
+            # Retrieve necessary details for calculations
+            f_type = asset.a_fuel_type
+            f_efficiency_rate = asset.a_efficiency_rate
+            f_cost = get_fuel_price(f_type)
+            if f_cost is None:
+                return jsonify({"error": f"Fuel price not found for type: {f_type}"}), 400
+            f_litres = calculate_f_litres(f_distance, f_efficiency_rate, f_load)
+            f_total_cost = f_litres * f_cost
+            data = {
+                "f_organization_id": trip.t_organization_id,
+                "f_created_by": data["f_created_by"],
+                "f_trip_id": trip_id,
+                "f_asset_id": trip.t_asset_id,
+                "f_operator_id": trip.t_operator_id,
+                "f_card_id": data["f_card_id"]if "f_card_id" in data else None,
+                "f_litres": f_litres,
+                "f_cost": f_cost,
+                "f_total_cost": f_total_cost,
+                "f_distance": f_distance,
+                "f_type": asset.a_fuel_type
+            }
+            result = qfuel_request.add(trip_id, data)
+            if result:
+                t_status = "Requested"
+                qtrip.update_status(trip_id, t_status)
+            return jsonify(result.as_dict())
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
 
 
+api_fuel.add_resource(AllFuelRequest, '/')
+api_fuel.add_resource(FuelRequest, '/<trip_id>/')
