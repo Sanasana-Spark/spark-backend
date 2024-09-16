@@ -16,7 +16,7 @@ class AllTrips(Resource):
     def get(self):
         """ list all trips """
         trips = [trips.as_dict() for trips in qtrip.all()]
-        return jsonify(trips=trips)
+        return jsonify(trips)
     
 
 class TripByStatus(Resource):
@@ -24,7 +24,7 @@ class TripByStatus(Resource):
         """ list all trips """
         trips = [trips.as_dict() for trips in
                  qtrip.get_trip_by_status(t_status)]
-        return jsonify(trips=trips)
+        return jsonify(trips)
 
 
 class Trip(Resource):
