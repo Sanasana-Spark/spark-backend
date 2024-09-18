@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from .. import  db
 from sanasana.models import trips as qtrip
+from sanasana.models.trips import Trip, get_trip_by_status, get_trip_by_id
 from flask_restful import Api, Resource
 
 bp = Blueprint('trips', __name__, url_prefix='/trips')
@@ -15,32 +16,13 @@ api_trips = Api(bp)
 class AllTrips(Resource):
     def get(self):
         """ list all trips """
-        trips = [trips.as_dict() for trips in qtrip.all()]
+        trips = [trips.as_dict() for trips in qtrip.get_all_trips()]
         return jsonify(trips)
     
-
-class TripByStatus(Resource):
-    def get(self, t_status):
-        """ list all trips """
-        trips = [trips.as_dict() for trips in
-                 qtrip.get_trip_by_status(t_status)]
-        return jsonify(trips)
-
-
-class Trip(Resource):
-    def get(self, trip_id):
-        """ get trip by id """
-        if trip_id is None:
-            return abort(404)
-        trip = qtrip.get_trip_by_id(trip_id)    
-        return jsonify(trip=trip)
-
-    def post(self, trip_id):
+    def post(self):
         """ Add an trip """
-        if trip_id is None:
-            return abort(404)
         data = request.get_json()
-        new_trip = Trip(
+        new_trip = qtrip.Trip(
             t_organization_id=data.get('t_organization_id'),
             t_created_by=data.get('t_created_by'),
             t_type=data.get('t_type'),
@@ -63,16 +45,33 @@ class Trip(Resource):
             t_directionsResponse=data.get('t_directionsResponse'),      
             t_distance=data.get('t_distance') if 't_distance' in data else None,
             t_duration=data.get('t_duration'),
-    )
+        )
         db.session.add(new_trip)
         db.session.commit()
         trip = new_trip.as_dict()
         return jsonify(**trip), 201
 
 
+class TripByStatus(Resource):
+    def get(self, t_status):
+        """ list all trips """
+        trips = [trips.as_dict() for trips in
+                 qtrip.get_trip_by_status(t_status)]
+        return jsonify(trips)
+
+
+class TripById(Resource):
+    def get(self, trip_id):
+        """ get trip by id """
+        if trip_id is None:
+            return abort(404)
+        trip = qtrip.get_trip_by_id(trip_id)    
+        return jsonify(trip.as_dict())
+
+
 api_trips.add_resource(AllTrips, '/')
 api_trips.add_resource(TripByStatus, '/status/<t_status>/')
-api_trips.add_resource(Trip, '/<trip_id>/')
+api_trips.add_resource(TripById, '/filter/<trip_id>/')
 
 @bp.route('/<userEmail>', methods=['GET'])
 def get_tripByUser(userEmail):
@@ -96,7 +95,7 @@ def get_trip_status():
 def add_trip():
     try:
         data = request.json
-        required_fields = ['t_organization_id', 't_created_by', 't_directionsResponse']
+        required_fields = ['t_organization_id', 't_created_by']
         data = {k.strip().lower(): v for k, v in data.items()}
         required_fields_normalized = [field.lower() for field in required_fields]
         missing_fields = [field for field in required_fields_normalized if field not in data]
@@ -110,10 +109,10 @@ def add_trip():
             t_type=data.get('t_type'),
             t_start_lat=data.get('t_start_lat'),
             t_start_long=data.get('t_start_long'),
-            t_start_elavation=data.get('t_start_elavation'),
+            t_start_elavation=data.get('t_start_elavation') if 't_start_elavation' in data else None,
             t_end_lat=data.get('t_end_lat'),
             t_end_long=data.get('t_end_long'),
-            t_end_elavation=data.get('t_end_elavation'),
+            t_end_elavation=data.get('t_end_elavation')if 't_end_elavation' in data else None,
             t_start_date=data.get('t_start_date'),
             t_end_date=data.get('t_end_date'),
             t_operator_id=data.get('t_operator_id'),
@@ -124,7 +123,7 @@ def add_trip():
             t_origin_place_query=data.get('t_origin_place_query'),
             t_destination_place_id=data.get('t_destination_place_id'),
             t_destination_place_query=data.get('t_destination_place_query'),
-            t_directionsResponse=data.get('t_directionsResponse'),      
+            # t_directionsResponse=data.get('t_directionsResponse'),      
             t_distance=data.get('t_distance') if 't_distance' in data else None,
             t_duration=data.get('t_duration'),
 
