@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import  db
-from sanasana.models import Trip as qtrip
+from sanasana.models import trips as qtrip
 from sanasana.models.trips import Trip, get_trip_by_status, get_trip_by_id
 from flask_restful import Api, Resource
 
@@ -16,7 +16,7 @@ api_trips = Api(bp)
 class AllTrips(Resource):
     def get(self):
         """ list all trips """
-        trips = [trips.as_dict() for trips in qtrip.all()]
+        trips = [trips.as_dict() for trips in qtrip.get_all_trips()]
         return jsonify(trips)
     
     def post(self):

@@ -70,8 +70,8 @@ class Trip(db.Model):
         result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
         result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
         return result
-    
-    
+  
+
 class Tstatus(db.Model):
     __tablename__ = 'tstatus'  # Name of the table
     __table_args__ = {'schema': 'assets'}  # Specify the schema
@@ -88,15 +88,13 @@ class Tstatus(db.Model):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
   
 
-def all():
+def get_all_trips():
     return Trip.query.all()
 
 
 def get_trip_by_id(trip_id):
-    act = Trip.query.filter_by(
-        id=trip_id
-    ).first()
-    return act
+    return Trip.query.filter_by(
+        id=trip_id).first()
 
 
 def get_trip_by_status(t_status):
