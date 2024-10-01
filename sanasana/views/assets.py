@@ -1,13 +1,32 @@
 from flask import (
     Blueprint,  jsonify, request
 )
+from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 import os
 from .. import db
 from sanasana.models.assets import Asset, Status
+from sanasana.models import assets as qasset
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
 
+api_assets = Api(bp)
+
+
+class Assets(Resource):
+    def get(self, org_id, user_id):
+        assets = [asset.as_dict() for asset in qasset.get_asset_by_org(org_id)]
+        return jsonify(assets)
+
+
+class AssetById(Resource):
+    def get(self, org_id, user_id, id):
+        assets = qasset.get_asset_by_id(org_id, id).as_dict()
+        return jsonify(assets)
+
+
+api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
+api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
 
 @bp.route('/')
 def get_assets():

@@ -57,10 +57,17 @@ class Status(db.Model):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
 
-def get_asset_by_id(trip_id):
+def get_asset_by_id(org_id, id):
     act = Asset.query.filter_by(
-        id=trip_id
+        id=id, a_organisation_id=org_id
     ).first()
+    return act
+
+
+def get_asset_by_org(org_id):
+    act = Asset.query.filter_by(
+        a_organisation_id=org_id
+    ).all()
     return act
 
 
