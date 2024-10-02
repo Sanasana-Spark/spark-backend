@@ -75,9 +75,16 @@ def add(trip_id, data):
     return fuel_request
 
 
-def get_asset_value_sum_by_org(org_id):
+def get_fuel_cost_sum_by_org(org_id):
     sum_of_values = db.session.query(
         func.sum(Fuel_request.f_total_cost)
     ).filter(Fuel_request.f_organization_id == org_id).scalar()
 
     return sum_of_values
+
+
+def get_fuel_request_by_org(org_id):
+    act = Fuel_request.query.filter_by(
+        f_organization_id=org_id
+    ).all()
+    return act
