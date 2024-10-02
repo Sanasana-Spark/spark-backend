@@ -4,27 +4,33 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import db
+from flask_restful import Api, Resource
 from sanasana.models.operators import Operator, Ostatus
+from sanasana.models import operators as qoperator
 
 bp = Blueprint('operators', __name__, url_prefix='/operators')
+api_operators = Api(bp)
 
 
-@bp.route('/')
-def get_operators():
-    operators = Operator.query.all()
-    data = [operator.as_dict() for operator in operators]
-    return jsonify(data)
+class AllOperators(Resource):
+    def get(self, org_id, user_id):
+        data = [operator.as_dict() for operator in qoperator.get_operator_by_org(org_id)]
+        return jsonify(data)
+    
+
+class OperatorById(Resource):
+    def get(self, org_id, user_id, id):
+        data = qoperator.get_operator_by_id(org_id, id).as_dict()
+        return jsonify(data)
+
+
+api_operators.add_resource(AllOperators, '/<org_id>/<user_id>/')
+api_operators.add_resource(OperatorById, '/<org_id>/<user_id>/<id>')
 
 
 def get_operator_column(operator_id, column_name):
     operator = Operator.query.get(operator_id)
     return getattr(operator, column_name, None) if operator else None
-
-
-@bp.route('/<operatorId>', methods=['GET'])
-def get_operatorsById(operatorId):
-    operator = Operator.query(Operator).filter(Operator.id == operatorId).first()
-    return jsonify(operator)
 
 
 @bp.route('/status')
@@ -65,7 +71,8 @@ def add_operator():
             o_role=data.get('o_role', ''),
             o_status=data.get('o_status', ''),
             o_cum_mileage=float(data.get('o_cum_mileage', 0)),
-            o_expirence=float(data.get('o_expirence', 0))
+            o_expirence=float(data.get('o_expirence', 0)),
+            o_assigned_asset=data.get('o_assigned_asset')
         )
 
         if 'o_image' in files:

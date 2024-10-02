@@ -14,9 +14,9 @@ api_trips = Api(bp)
 
 
 class AllTrips(Resource):
-    def get(self):
+    def get(self, org_id, user_id):
         """ list all trips """
-        trips = [trips.as_dict() for trips in qtrip.get_all_trips()]
+        trips = [trips.as_dict() for trips in qtrip.get_trip_by_org(org_id)]
         return jsonify(trips)
     
     def post(self):
@@ -53,10 +53,10 @@ class AllTrips(Resource):
 
 
 class TripByStatus(Resource):
-    def get(self, t_status):
+    def get(self, org_id, user_id, t_status):
         """ list all trips """
         trips = [trips.as_dict() for trips in
-                 qtrip.get_trip_by_status(t_status)]
+                 qtrip.get_trip_by_status(org_id, t_status)]
         return jsonify(trips)
 
 
@@ -69,8 +69,8 @@ class TripById(Resource):
         return jsonify(trip.as_dict())
 
 
-api_trips.add_resource(AllTrips, '/')
-api_trips.add_resource(TripByStatus, '/status/<t_status>/')
+api_trips.add_resource(AllTrips, '/<org_id>/<user_id>/')
+api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/filter/<trip_id>/')
 
 @bp.route('/<userEmail>', methods=['GET'])

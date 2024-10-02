@@ -19,9 +19,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 
 class AllFuelRequest(Resource):
-    def get(self):
-        fuel_requests = Fuel_request.query.all()
-        data = [fuel_request.as_dict() for fuel_request in fuel_requests]
+    def get(self, org_id, user_id):
+        data = [fuel_request.as_dict() for fuel_request in qfuel_request.get_fuel_request_by_org(org_id)]
         return jsonify(data)
 
 
@@ -106,7 +105,7 @@ class FuelRequest(Resource):
             return jsonify({'error': str(e)}), 500
 
 
-api_fuel.add_resource(AllFuelRequest, '/')
+api_fuel.add_resource(AllFuelRequest, '/<org_id>/<user_id>/')
 api_fuel.add_resource(FuelRequest, '/<trip_id>/')
 
 

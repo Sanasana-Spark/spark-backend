@@ -35,7 +35,9 @@ class Operator(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
-        result['o_a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['a_make'] = self.asset.a_make if self.asset else None
+        result['a_model'] = self.asset.a_model if self.asset else None
         return result
     
 
@@ -53,3 +55,17 @@ class Ostatus(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
+
+def get_operator_by_id(org_id, id):
+    act = Operator.query.filter_by(
+        id=id, o_organisation_id=org_id
+    ).first()
+    return act
+
+
+def get_operator_by_org(org_id):
+    act = Operator.query.filter_by(
+        o_organisation_id=org_id
+    ).all()
+    return act
