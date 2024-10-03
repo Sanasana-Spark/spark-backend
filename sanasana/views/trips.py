@@ -61,19 +61,27 @@ class TripByStatus(Resource):
 
 
 class TripById(Resource):
-    def get(self, trip_id):
+    def get(self, org_id, user_id, trip_id):
         """ get trip by id """
         if trip_id is None:
             return abort(404)
         trip = qtrip.get_trip_by_id(trip_id)    
         return jsonify(trip.as_dict())
+    
+    def post(self, org_id, user_id, trip_id):
+        data = request.json
+        t_status = data.get('t_status')
+        # if t_status is None:
+        #     t_status = "In-Progress"
+        trip = qtrip.update_status(trip_id, t_status)
+        return jsonify(trip.as_dict())
 
 
 api_trips.add_resource(AllTrips, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
-api_trips.add_resource(TripById, '/filter/<trip_id>/')
+api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 
-@bp.route('/<userEmail>', methods=['GET'])
+@bp.route('email/<userEmail>', methods=['GET'])
 def get_tripByUser(userEmail):
     trip = Trip.query(Trip).filter(Trip.t_o_email == userEmail).first()
     return jsonify(trip)
