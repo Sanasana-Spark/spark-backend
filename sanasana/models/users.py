@@ -19,6 +19,10 @@ class User(db.Model):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
 
+def get_user_by_id(org_id, trip_id):
+    return User.query.filter_by(
+        id=trip_id, organization_id=org_id).first()
+
 class Organization(db.Model):
     __tablename__ = 'organization'  # Name of the table
     __table_args__ = {'schema': 'users'}  # Specify the schema
