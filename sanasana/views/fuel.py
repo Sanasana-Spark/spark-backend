@@ -47,6 +47,8 @@ def allowed_file(filename):
 
 class FuelRequest(Resource):
     def post(self, trip_id):
+        data = request.json
+        trip_id = data["f_trip_id"]
         trip = qtrip.get_trip_by_id(trip_id)
         asset = qasset.get_asset_by_id(trip.t_asset_id)  
         if not trip:
