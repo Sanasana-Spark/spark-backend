@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from .. import  db
 from sanasana.models import trips as qtrip
+from sanasana.views import users as vuser
 from sanasana.models.trips import Trip, get_trip_by_status, get_trip_by_id
 from flask_restful import Api, Resource
 
@@ -16,7 +17,10 @@ api_trips = Api(bp)
 class AllTrips(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
-        trips = [trips.as_dict() for trips in qtrip.get_trip_by_org(org_id)]
+        user = vuser.getuserdetails(org_id, user_id)
+        default_id = user['default_id']
+        trips = [trips.as_dict() for trips in 
+                 qtrip.get_trip_by_org(org_id, default_id)]
         return jsonify(trips)
     
     def post(self):

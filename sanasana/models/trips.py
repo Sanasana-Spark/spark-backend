@@ -97,9 +97,12 @@ def get_trip_by_id(trip_id):
         id=trip_id).first()
 
 
-def get_trip_by_org(org_id):
+def get_trip_by_org(org_id, user_id):
+    
     return Trip.query.filter_by(
-        t_organization_id=org_id).all()
+        t_organization_id=org_id,
+        t_operator_id=user_id
+        ).all()
 
 
 def get_trip_by_status(org_id, t_status):

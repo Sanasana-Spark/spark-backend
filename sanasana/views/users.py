@@ -1,13 +1,16 @@
 from flask import (
     Blueprint,  jsonify, request
 )
+from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 import os
 from .. import db
 from sanasana.models.users import User, Organization
+from sanasana.models import users as qusers
 import logging
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
+api_users = Api(bp)
 
 
 @bp.route('/')
@@ -89,3 +92,12 @@ def get_organization(userId):
             logging.info(f'Response: {response}')  # Add logging
             return 3
     return jsonify({'error': 'Organization not found'}), 404
+
+
+
+def getuserdetails(org_id, user_id):
+    """ get trip by id """
+    if user_id is None:
+        return abort(404)
+    trip = qusers.get_user_by_id(org_id, user_id)    
+    return trip.as_dict()
