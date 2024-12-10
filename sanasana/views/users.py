@@ -13,18 +13,27 @@ bp = Blueprint('organizations', __name__, url_prefix='/organizations')
 api_users = Api(bp)
 
 
-@bp.route('/')
-def get_organizations():
-    Organizations = Organization.query.all()
-    Organizations_list = [Organization.as_dict() for Organization in Organizations]
-    return jsonify(Organizations_list)
+class AllOrg(Resource):
+    def get(self):
+        Organizations = Organization.query.all()
+        Organizations_list = [Organization.as_dict() for Organization in Organizations]
+        return jsonify(Organizations_list)
 
 
-@bp.route('/users')
-def get_users():
-    users = User.query.all()
-    users_list = [user.as_dict() for user in users]
-    return jsonify(users_list)
+class UsersByOrg(Resource):
+    def get(self, org_id, admin_id):
+        """ get users by id """
+        users = [users.as_dict() for users in 
+                 qusers.get_users_by_org(org_id)]
+        
+        # users = User.query.filter_by(organization_id=org_id).all()
+        return jsonify(users)
+
+
+api_users.add_resource(AllOrg, '/')
+api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
+
+
 
 
 @bp.route('/create-organization', methods=['POST'])
