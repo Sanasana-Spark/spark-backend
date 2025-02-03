@@ -14,13 +14,21 @@ bp = Blueprint('trips', __name__, url_prefix='/trips')
 api_trips = Api(bp)
 
 
-class AllTrips(Resource):
+class AllOrgTrips(Resource):
+    def get(self, org_id):
+        """ list all trips """
+        trips = [trips.as_dict() for trips in 
+                 qtrip.get_trip_by_org(org_id)]
+        return jsonify(trips)
+    
+
+class AllUserTrips(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
         user = vuser.getuserdetails(org_id, user_id)
         default_id = user['default_id']
         trips = [trips.as_dict() for trips in 
-                 qtrip.get_trip_by_org(org_id, default_id)]
+                 qtrip.get_trip_by_user(org_id, default_id)]
         return jsonify(trips)
     
     def post(self):
@@ -81,7 +89,8 @@ class TripById(Resource):
         return jsonify(trip.as_dict())
 
 
-api_trips.add_resource(AllTrips, '/<org_id>/<user_id>/')
+api_trips.add_resource(AllOrgTrips, '/<org_id>/')
+api_trips.add_resource(AllUserTrips, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 
@@ -150,24 +159,24 @@ def add_trip():
         return jsonify({'error': str(e)}), 500
 
 
-@bp.route('/<int:trip_id>', methods=['PUT'])
-def update_trip(trip_id):
-    trip = get_trip_by_id(trip_id)
-    if not trip:
-        return jsonify({'error': 'Trip not found'}), 404
-    try:
-        data = request.get_json()
-        # Loop through each attribute and value in the JSON data
-        for attribute, value in data.items():
-            if hasattr(trip, attribute):
-                setattr(trip, attribute, value)
-            else:
-                return jsonify({'error': f'Invalid attribute: {attribute}'}), 400
-        db.session.commit()
-        return jsonify({'message': 'Trip updated successfully'}), 200
-    except Exception as e:
-        db.session.rollback()  # Rollback in case of any errors
-        return jsonify({'error': 'Failed to update trip' + str(e)}), 500
+# @bp.route('/<int:trip_id>', methods=['PUT'])
+# def update_trip(trip_id):
+#     trip = get_trip_by_id(trip_id)
+#     if not trip:
+#         return jsonify({'error': 'Trip not found'}), 404
+#     try:
+#         data = request.get_json()
+#         # Loop through each attribute and value in the JSON data
+#         for attribute, value in data.items():
+#             if hasattr(trip, attribute):
+#                 setattr(trip, attribute, value)
+#             else:
+#                 return jsonify({'error': f'Invalid attribute: {attribute}'}), 400
+#         db.session.commit()
+#         return jsonify({'message': 'Trip updated successfully'}), 200
+#     except Exception as e:
+#         db.session.rollback()  # Rollback in case of any errors
+#         return jsonify({'error': 'Failed to update trip' + str(e)}), 500
     
 
 
