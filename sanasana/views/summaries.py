@@ -16,7 +16,7 @@ api_summaries = Api(bp)
 
 
 class DashboardSummary(Resource):
-    def get(self, org_id, user_id):
+    def get(self, org_id):
         totalAssets = qasset.get_asset_count_by_org(org_id)
         overallAssetsValue = qasset.get_asset_value_sum_by_org(org_id)
         totalFuelCost = qfuel_request.get_fuel_cost_sum_by_org(org_id)
