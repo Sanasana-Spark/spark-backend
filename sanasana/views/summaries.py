@@ -30,4 +30,4 @@ class DashboardSummary(Resource):
         return response, 200
 
 
-api_summaries.add_resource(DashboardSummary, '/<org_id>/<user_id>/')
+api_summaries.add_resource(DashboardSummary, '/<org_id>/')
