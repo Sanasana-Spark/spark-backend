@@ -4,10 +4,10 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models import trips as qtrip
-from sanasana.models import assets as qasset
-from sanasana.models import fuel as qfuel_request
-from sanasana.models.fuel import Fuel_request
+from sanasana.query import trips as qtrip
+from sanasana.query import assets as qasset
+from sanasana.query import fuel as qfuel_request
+from sanasana.query.fuel import Fuel_request
 from flask_restful import Api, Resource
 
 

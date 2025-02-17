@@ -5,8 +5,8 @@ from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models.users import User, Organization
-from sanasana.models import users as qusers
+from sanasana.models import User, Organization
+from sanasana.query import users as qusers
 import logging
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
@@ -20,93 +20,81 @@ class AllOrg(Resource):
         return jsonify(Organizations_list)
 
 
+class UserOrg(Resource):
+    def get(self):
+        user_id = request.args.get('user_id')
+        email = request.args.get('user_email')
+        user = User.query.filter_by(email=email, id=user_id).first()
+        invited_user = User.query.filter_by(email=email).first()
+
+        if user:
+            user_org = Organization.query.filter_by(id=user.organization_id).first()
+            return user_org.as_dict(), 200
+        
+        elif invited_user:
+            invited_user.id = user_id
+            db.session.add(invited_user)
+            db.session.commit()
+
+            user_org = Organization.query.filter_by(
+                id=invited_user.organization_id
+            ).first()
+            return user_org.as_dict(), 200
+        else:
+            return ({'error': 'User does not have invite to any organization'}), 404       
+
+
 class UsersByOrg(Resource):
     def get(self, org_id, admin_id):
         """ get users by id """
         users = [users.as_dict() for users in 
                  qusers.get_users_by_org(org_id)]
-        
-        # users = User.query.filter_by(organization_id=org_id).all()
+        return jsonify(users)
+    
+    def post(self, org_id, admin_id):
+        """ invite user into an organisation """
+        data = request.json
+        email = data.get('email')
+        username = data.get('username')
+        organization_id = org_id
+        user = User(email=email, username=username, organization_id=organization_id)
+
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(user.as_dict())
+
+
+class UserById(Resource):
+    def get(self, org_id, user_id):
+        """ get users by id """
+        users = [users.as_dict() for users in 
+                 qusers.get_users_by_org(org_id)]
         return jsonify(users)
 
 
-api_users.add_resource(AllOrg, '/')
-api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
-
-
-
-
-@bp.route('/create-organization', methods=['POST'])
-def create_organization():
-    try:
+class UpdateUser(Resource):
+    def put(self, org_id, email):
         data = request.json
-        user_id = data['userId']
-        user_name = data['userName']
-        email = data['email']
-        organization_id = data['organizationId']
-        organization_name = data['organizationName']
+        email = data.get('email')
+        id = data.get('id')
+        username = data.get('username')
 
-        # Check if organization already exists
-        organization = Organization.query.filter_by(id=organization_id).first()
-        
-        if not organization:
-            # Create new organization if it doesn't exist
-            organization = Organization(id=organization_id, org_name=organization_name)
-            db.session.add(organization)
-            db.session.commit()
+        if not email or not username:
+            return jsonify({'error': 'Email and username are required'}), 400
 
-        # Check if user already exists
-        existing_user = User.query.filter_by(id=user_id).first()
-        if existing_user:
-            return jsonify({'error': 'User already exists'}), 400
+        user = User.query.filter_by(email=email, organization_id=org_id).first()
 
-        # Create user and associate with the organization
-        user = User(id=user_id, username=user_name, email=email, organization_id=organization_id)
-        db.session.add(user)
+        if not user:
+            return jsonify({'error': 'User does not have invite'}), 404
+
+        user.id = id
+        user.username = username
         db.session.commit()
-
-        return jsonify({'message': 'Organization and user created successfully'}), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+ 
+        return jsonify({'message': 'User updated successfully'}), 200
 
 
-@bp.route('/api/invite-user', methods=['POST'])
-def invite_user():
-    data = request.json
-    email = data['email']
-    organization_id = data['organizationId']
-
-    # Logic to send invitation email with organization_id
-
-    return jsonify({'message': 'User invited successfully'})
-
-
-@bp.route('/organizations/<userId>', methods=['GET'])
-def get_organization(userId):
-    user = User.query(User).filter(User.id == userId).first()
-    if user and user.organization_id:
-        organization = Organization.query(Organization).filter(Organization.id == user.organization_id).first()
-        # if organization:
-        #     return jsonify({
-        #         'id': organization.id,
-        #         'org_name': organization.org_name
-        #     })
-        if organization:
-            response = {
-                'id': organization.id,
-                'org_name': organization.org_name
-            }
-            logging.info(f'Response: {response}')  # Add logging
-            return 3
-    return jsonify({'error': 'Organization not found'}), 404
-
-
-
-def getuserdetails(org_id, user_id):
-    """ get trip by id """
-    if user_id is None:
-        return abort(404)
-    trip = qusers.get_user_by_id(org_id, user_id)    
-    return trip.as_dict()
+api_users.add_resource(AllOrg, '/')
+api_users.add_resource(UserOrg, '/user_org/')
+api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
+api_users.add_resource(UpdateUser, '/update_user/<org_id>/<email>')

@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models.card import Card
+from sanasana.models import Card
 
 bp = Blueprint('cards', __name__, url_prefix='/cards')
 

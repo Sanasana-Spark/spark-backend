@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 import os
 from .. import db
 from flask_restful import Api, Resource
-from sanasana.models.operators import Operator, Ostatus
-from sanasana.models import operators as qoperator
+from sanasana.models import Operator, Ostatus
+from sanasana.query import operators as qoperator
 
 bp = Blueprint('operators', __name__, url_prefix='/operators')
 api_operators = Api(bp)

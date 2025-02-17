@@ -5,8 +5,8 @@ from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 import os
 from .. import db
-from sanasana.models.assets import Asset, Status
-from sanasana.models import assets as qasset
+from sanasana.query import assets as qasset
+from sanasana.models import Status, Asset
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
 
