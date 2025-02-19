@@ -32,6 +32,8 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     organization_id = db.Column(db.String(), nullable=False)
+    name = db.Column(db.String(), nullable=True)
+    
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -70,7 +72,12 @@ class Asset(db.Model):
     a_attachment2 = db.Column(db.String(200), nullable=True)
     a_attachment3 = db.Column(db.String(200), nullable=True)
     a_status = db.Column(db.String(50), nullable=False)
-    a_attached_card = db.Column(db.Integer, db.ForeignKey('assets.cards.id'), nullable=True)
+    a_displacement = db.Column(db.Float, nullable=True)
+    a_mileage = db.Column(db.Float, nullable=True)
+    a_horsepower = db.Column(db.Float, nullable=True)
+    a_acceleration = db.Column(db.Float, nullable=True)
+    a_insurance_expiry = db.Column(db.Date, nullable=True)
+    operator = db.relationship('Operator', backref='assets')
 
     def __repr__(self):
         return f'<Asset {self.a_name}>' 
@@ -242,10 +249,7 @@ class Card(db.Model):
     c_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
     c_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
     c_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False)
-    c_assign_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
     c_assigned_at = db.Column(db.DateTime, nullable=True)
-    c_assigned_to = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
-    c_attached_asset = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=True)
     c_number = db.Column(db.String, nullable=False)
     c_expiry_date = db.Column(db.DateTime, nullable=True)
 
