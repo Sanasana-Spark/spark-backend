@@ -127,6 +127,9 @@ class Operator(db.Model):
     o_expirence = db.Column(db.Numeric(), nullable=True)
     o_attachment1 = db.Column(db.String(200), nullable=True)
     asset = db.relationship('Asset', backref='operator')
+    user = db.relationship('User', backref='operator', uselist=False,
+                           primaryjoin='foreign(Operator.o_email) == User.email'
+                        )
 
     def __repr__(self):
         return f'<Operators {self.o_national_id}>' 
@@ -137,8 +140,10 @@ class Operator(db.Model):
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
         result['a_make'] = self.asset.a_make if self.asset else None
         result['a_model'] = self.asset.a_model if self.asset else None
+        result['user_id'] = self.user.id if self.user else None
+        result['user_email'] = self.user.email if self.user else None
         return result
-    
+
 
 class Ostatus(db.Model):
     __tablename__ = 'ostatus'  # Name of the table
@@ -155,7 +160,6 @@ class Ostatus(db.Model):
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
-
 
 class Trip(db.Model):
     __tablename__ = 'trips'  # Name of the table
@@ -216,6 +220,7 @@ class Trip(db.Model):
         result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
         result['o_name'] = self.operator.o_name if self.operator else None
         result['o_email'] = self.operator.o_email if self.operator else None
+        result['user_id'] = self.operator.user.id if self.operator and self.operator.user else None
         result['a_make'] = self.asset.a_make if self.asset else None
         result['a_model'] = self.asset.a_model if self.asset else None
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
