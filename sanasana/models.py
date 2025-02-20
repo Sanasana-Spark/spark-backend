@@ -149,7 +149,7 @@ class Ostatus(db.Model):
     o_name_code = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
-        return f'<Status {self.o_name}>' 
+        return f'<Ostatus {self.o_name}>' 
 
     # This method converts the model instance to a dictionary
     def as_dict(self):

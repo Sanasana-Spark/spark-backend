@@ -87,10 +87,28 @@ class AssetById(Resource):
     def get(self, org_id, user_id, id):
         assets = qasset.get_asset_by_id(org_id, id).as_dict()
         return jsonify(assets)
+    
+
+class AssetStatus(Resource):
+    def get(self):
+        statuses = Status.query.all()
+        status_list = [status.as_dict() for status in statuses]
+        return jsonify(status_list)
+
+    def post(self):
+        data = request.get_json()
+        data = {
+            "s_name": data["s_name"],
+            "s_name_code": data["s_name_code"] 
+            }
+        result = qasset.add_status(data)
+        status = result.as_dict()
+        return jsonify(status=status)
 
 
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
+api_assets.add_resource(AssetStatus, '/status')
 
 @bp.route('/')
 def get_assets():

@@ -1,6 +1,6 @@
 from sanasana import db
 from sqlalchemy import func
-from sanasana.models import Asset 
+from sanasana.models import Asset, Status
 from sanasana import models
 
 
@@ -54,3 +54,12 @@ def add_asset(data):
     db.session.add(asset)
     db.session.commit()
     return asset
+
+
+def add_status(data):
+    status = Status()
+    status.s_name = data["s_name"]
+    status.s_name_code = data["s_name_code"]
+    db.session.add(status)
+    db.session.commit()
+    return status
