@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from .. import db
 from flask_restful import Api, Resource
-from sanasana.models import Operator, Ostatus
+from sanasana import models
 from sanasana.query import operators as qoperator
 
 bp = Blueprint('operators', __name__, url_prefix='/operators')
@@ -16,7 +16,31 @@ class AllOperators(Resource):
     def get(self, org_id, user_id):
         data = [operator.as_dict() for operator in qoperator.get_operator_by_org(org_id)]
         return jsonify(data)
-    
+     
+    def post(self, org_id, user_id):
+        data = request.get_json()
+        data = {k.strip().lower(): v for k, v in data.items()}
+
+        data = {
+            "o_assigned_asset": data["o_assigned_asset"],
+            "o_created_by": user_id,
+            "o_cum_mileage": data["o_cum_mileage"],
+            "o_email": data["o_email"],
+            "o_expirence": data["o_expirence"],
+            "o_lincense_expiry": data["o_lincense_expiry"],
+            "o_lincense_id": data["o_lincense_id"],
+            "o_lincense_type": data["o_lincense_type"],
+            "o_name": data["o_name"],
+            "o_national_id": data["o_national_id"],
+            "o_organisation_id": org_id,
+            "o_phone": data["o_phone"],
+            "o_role": data["o_role"],
+            "o_status": data["o_status"]
+        }
+        result = qoperator.add_operator(data)
+        operator = result.as_dict()
+        return jsonify(operator=operator)
+  
 
 class OperatorById(Resource):
     def get(self, org_id, user_id, id):
@@ -24,20 +48,38 @@ class OperatorById(Resource):
         return jsonify(data)
 
 
+class OperatorStatus(Resource):
+    def get(self):
+        statuses = models.Ostatus.query.all()
+        status_list = [status.as_dict() for status in statuses]
+        return jsonify(status_list)
+
+    def post(self):
+        data_request = request.get_json()
+        data = {
+            "o_name": data_request["o_name"],
+            "o_name_code": data_request["o_name_code"]
+            }
+        result = qoperator.add_operator_status(data)
+        status = result.as_dict()
+        return jsonify(status=status)
+
+
 api_operators.add_resource(AllOperators, '/<org_id>/<user_id>/')
 api_operators.add_resource(OperatorById, '/<org_id>/<user_id>/<id>')
+api_operators.add_resource(OperatorStatus, '/status')
 
 
-def get_operator_column(operator_id, column_name):
-    operator = Operator.query.get(operator_id)
-    return getattr(operator, column_name, None) if operator else None
+# def get_operator_column(operator_id, column_name):
+#     operator = Operator.query.get(operator_id)
+#     return getattr(operator, column_name, None) if operator else None
 
 
-@bp.route('/status')
-def get_operator_status():
-    operator_status = Ostatus.query.all()
-    status_list = [status.as_dict() for status in operator_status]
-    return jsonify(status_list)
+# @bp.route('/status')
+# def get_operator_status():
+#     operator_status = Ostatus.query.all()
+#     status_list = [status.as_dict() for status in operator_status]
+#     return jsonify(status_list)
 
 
 @bp.route('/create', methods=['POST'])
