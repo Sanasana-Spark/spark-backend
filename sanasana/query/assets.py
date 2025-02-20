@@ -1,6 +1,7 @@
 from sanasana import db
 from sqlalchemy import func
 from sanasana.models import Asset 
+from sanasana import models
 
 
 def get_asset_by_id(org_id, id):
@@ -30,3 +31,26 @@ def get_asset_value_sum_by_org(org_id):
     ).filter(Asset.a_organisation_id == org_id).scalar()
 
     return sum_of_values
+
+
+def add_asset(data):
+    asset = models.Asset()
+    asset.a_created_by = data["a_created_by"]
+    asset.a_organisation_id = data["a_organisation_id"]
+    # asset.a_name = data["a_license_plate"]
+    asset.a_make = data["a_make"]
+    asset.a_model = data["a_model"]
+    asset.a_year = data["a_year"]
+    asset.a_license_plate = data["a_license_plate"]
+    asset.a_fuel_type = data["a_fuel_type"]
+    asset.a_tank_size = data["a_tank_size"]
+    asset.a_displacement = data["a_displacement"]
+    asset.a_mileage = data["a_mileage"]
+    asset.a_horsepower = data["a_horsepower"]
+    asset.a_acceleration = data["a_acceleration"]
+    asset.a_insurance_expiry = data["a_insurance_expiry"]
+    asset.a_status = data["a_status"]
+
+    db.session.add(asset)
+    db.session.commit()
+    return asset
