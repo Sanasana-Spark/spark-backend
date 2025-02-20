@@ -24,6 +24,13 @@ def get_engine():
         return current_app.extensions['migrate'].db.engine
 
 
+def include_name(name, type_, parent_names):
+    if type_ == "schema":
+        return name in ["assets", "users"]
+    else:
+        return True
+
+
 def get_engine_url():
     try:
         return get_engine().url.render_as_string(hide_password=False).replace(
@@ -65,7 +72,9 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=get_metadata(), literal_binds=True
+        url=url, target_metadata=get_metadata(), literal_binds=True,
+        include_schemas=True,
+        include_name=include_name
     )
 
     with context.begin_transaction():
@@ -100,6 +109,8 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
+            include_schemas=True,
+            include_name=include_name,
             **conf_args
         )
 

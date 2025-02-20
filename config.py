@@ -7,6 +7,8 @@ import os
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    include_schemas = True
+    INCLUDE_SCHEMAS = True
 
 
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)

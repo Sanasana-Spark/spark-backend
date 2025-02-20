@@ -4,9 +4,9 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 from .. import  db
-from sanasana.models import trips as qtrip
+from sanasana.query import trips as qtrip
 from sanasana.views import users as vuser
-from sanasana.models.trips import Trip, get_trip_by_status, get_trip_by_id
+from sanasana.query.trips import Trip, get_trip_by_status, get_trip_by_id
 from flask_restful import Api, Resource
 
 bp = Blueprint('trips', __name__, url_prefix='/trips')
