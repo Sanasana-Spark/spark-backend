@@ -77,7 +77,6 @@ class Asset(db.Model):
     a_horsepower = db.Column(db.Float, nullable=True)
     a_acceleration = db.Column(db.Float, nullable=True)
     a_insurance_expiry = db.Column(db.Date, nullable=True)
-    operator = db.relationship('Operator', backref='assets')
 
     def __repr__(self):
         return f'<Asset {self.a_name}>' 

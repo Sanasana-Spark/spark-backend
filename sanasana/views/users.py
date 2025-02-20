@@ -18,6 +18,22 @@ class AllOrg(Resource):
         Organizations = Organization.query.all()
         Organizations_list = [Organization.as_dict() for Organization in Organizations]
         return jsonify(Organizations_list)
+    
+    def post(self):
+        data = request.json
+        org_name = data.get('org_name')
+        org_country = data.get('org_country')
+        org_email = data.get('org_email')
+        id = data.get('id')
+
+        if not org_name:
+            return jsonify({'error': 'Organization name is required'}), 400
+
+        new_org = Organization(org_name=org_name, org_country=org_country, org_email=org_email, id=id)
+        db.session.add(new_org)
+        db.session.commit()
+
+        return jsonify(new_org.as_dict())
 
 
 class UserOrg(Resource):
