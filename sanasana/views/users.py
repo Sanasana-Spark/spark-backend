@@ -36,6 +36,13 @@ class AllOrg(Resource):
         return jsonify(new_org.as_dict())
 
 
+class Org(Resource):
+    def get(self, org_id):
+        Organizations = Organization.query.filter_by(id=org_id).all()
+        Organizations_list = [Organization.as_dict() for Organization in Organizations]
+        return jsonify(Organizations_list)
+
+
 class UserOrg(Resource):
     def get(self):
         user_id = request.args.get('user_id')
@@ -110,7 +117,25 @@ class UpdateUser(Resource):
         return jsonify({'message': 'User updated successfully'}), 200
 
 
+class EditUser(Resource):
+    def put(self, org_id, admin_id):
+        data = request.json
+        id = data.get('id')
+        role = data.get('role')
+        phone = data.get('phone')
+        status = data.get('status')
+
+        user = User.query.filter_by(id=id).first()
+        user.role = role
+        user.phone = phone
+        user.status = status
+        db.session.commit()
+        return jsonify({'message': 'user details updated'})
+
+
+
 api_users.add_resource(AllOrg, '/')
+api_users.add_resource(Org, '/<org_id>/')
 api_users.add_resource(UserOrg, '/user_org/')
 api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
 api_users.add_resource(UpdateUser, '/update_user/<org_id>/<email>')
