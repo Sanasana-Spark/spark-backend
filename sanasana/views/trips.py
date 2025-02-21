@@ -5,10 +5,11 @@ from werkzeug.utils import secure_filename
 import os
 from .. import  db
 from sanasana.query import trips as qtrip
-from sanasana.views import users as vuser
-from sanasana.query.trips import Trip, get_trip_by_status, get_trip_by_id
+from sanasana.query.trips import Trip
 from sanasana import models
 from flask_restful import Api, Resource
+from flask_cors import CORS
+# import pandas as pd
 
 
 bp = Blueprint('trips', __name__, url_prefix='/trips')
@@ -97,12 +98,47 @@ class TripById(Resource):
         #     t_status = "In-Progress"
         trip = qtrip.update_status(trip_id, t_status)
         return jsonify(trip.as_dict())
+    
+
+class TripReport(Resource):
+    def get(self, org_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        query = Trip.query.filter_by(t_organization_id=org_id)
+
+        if start_date and end_date:
+            query = query.filter(Trip.t_created_at.between(start_date, end_date))
+
+        trips = query.all()
+        return jsonify([trip.as_dict() for trip in trips])
+
+
+# class ExportTripReport(Resource):
+#     def get(self):
+#         org_id = request.args.get('organization_id')
+#         start_date = request.args.get('start_date')
+#         end_date = request.args.get('end_date')
+
+#         query = Trip.query.filter(Trip.t_organization_id == org_id)
+#         if start_date and end_date:
+#             query = query.filter(Trip.t_created_at.between(start_date, end_date))
+
+#         trips = [trip.as_dict() for trip in query.all()]
+#         df = pd.DataFrame(trips)
+
+#         file_path = "trip_report.xlsx"
+#         df.to_excel(file_path, index=False)
+
+#         return jsonify({"message": "Report generated", "file": file_path})
 
 
 api_trips.add_resource(TripsByOrg, '/<org_id>/')
 api_trips.add_resource(TripsByUser, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(TripReport, '/reports/<org_id>/')
+# api_trips.add_resource(ExportTripReport, '/reports/export/')
 
 
 

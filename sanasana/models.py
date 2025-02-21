@@ -33,6 +33,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     organization_id = db.Column(db.String(), nullable=False)
     name = db.Column(db.String(), nullable=True)
+    role = db.Column(db.String(), nullable=True)
+    phone = db.Column(db.String(), nullable=True)
+    status = db.Column(db.String(), nullable=True)
     
 
     def __repr__(self):
