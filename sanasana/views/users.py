@@ -1,12 +1,14 @@
 from flask import (
     Blueprint,  jsonify, request
 )
+from flask_mail import Message
 from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 import os
-from .. import db
+from sanasana import db, mail
 from sanasana.models import User, Organization
 from sanasana.query import users as qusers
+from sanasana.query import send_email as qsend_email
 import logging
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
@@ -41,6 +43,22 @@ class Org(Resource):
         Organizations = Organization.query.filter_by(id=org_id).all()
         Organizations_list = [Organization.as_dict() for Organization in Organizations]
         return jsonify(Organizations_list)
+    
+    def post(self, org_id):
+        msg = Message(
+            subject='Hello from the other side!', 
+            sender='info@sanasanasustainability.com',  # Ensure this matches MAIL_USERNAME
+            recipients=['muthonimuriuki22@gmail.com']  # Replace with actual recipient's email
+        )
+        msg.body = "Hey, sending you this email from my Flask app, let me know if it works."
+        mail.send(msg)
+        return "Message sent!"
+
+        message_recipient = "muthonimuriuki22@gmail.com"
+        message_subject = "Testing emailing"
+        message_body = f"You have been invited to sanasana by org {org_id}"
+        qsend_email.send_async_email(message_recipient, message_subject, message_body)
+
 
 
 class UserOrg(Resource):
@@ -77,10 +95,30 @@ class UsersByOrg(Resource):
     def post(self, org_id, admin_id):
         """ invite user into an organisation """
         data = request.json
+        data = {
+            "organization_id": org_id,
+            "email": data["email"],
+            "role": data["role"],
+            "phone": data["phone"],
+            "name": data["username"],
+            "username": data["username"],
+            "status": "active"
+            }
+        result = qusers.add_user(data)
+        user = result.as_dict()
+        return jsonify(user=user)
+
+
+
         email = data.get('email')
         username = data.get('username')
+        role = data.get('role')
+        phone = data.get('phone')
+        status = "active"
         organization_id = org_id
-        user = User(email=email, username=username, organization_id=organization_id)
+        user = User(email=email, username=username, name=username, role=role,
+                    phone=phone, organization_id=organization_id,
+                    status=status)
 
         db.session.add(user)
         db.session.commit()
@@ -125,7 +163,7 @@ class EditUser(Resource):
         phone = data.get('phone')
         status = data.get('status')
 
-        user = User.query.filter_by(id=id).first()
+        user = User.query.filter_by(id=id, organization_id=org_id).first()
         user.role = role
         user.phone = phone
         user.status = status
@@ -133,9 +171,9 @@ class EditUser(Resource):
         return jsonify({'message': 'user details updated'})
 
 
-
 api_users.add_resource(AllOrg, '/')
 api_users.add_resource(Org, '/<org_id>/')
 api_users.add_resource(UserOrg, '/user_org/')
 api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
+api_users.add_resource(EditUser, '/edituser/<org_id>/<admin_id>/')
 api_users.add_resource(UpdateUser, '/update_user/<org_id>/<email>')

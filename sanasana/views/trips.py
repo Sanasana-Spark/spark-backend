@@ -5,7 +5,6 @@ from werkzeug.utils import secure_filename
 import os
 from .. import  db
 from sanasana.query import trips as qtrip
-from sanasana.query.trips import Trip
 from sanasana import models
 from flask_restful import Api, Resource
 from flask_cors import CORS
@@ -42,37 +41,38 @@ class TripsByUser(Resource):
         trips_list = [trip.as_dict() for trip in trips]
         return jsonify(trips_list)
     
-    def post(self):
+    def post(self, org_id, user_id):
         """ Add an trip """
-        data = request.get_json()
-        new_trip = qtrip.Trip(
-            t_organization_id=data.get('t_organization_id'),
-            t_created_by=data.get('t_created_by'),
-            t_type=data.get('t_type'),
-            t_start_lat=data.get('t_start_lat'),
-            t_start_long=data.get('t_start_long'),
-            t_start_elavation=data.get('t_start_elavation'),
-            t_end_lat=data.get('t_end_lat'),
-            t_end_long=data.get('t_end_long'),
-            t_end_elavation=data.get('t_end_elavation'),
-            t_start_date=data.get('t_start_date'),
-            t_end_date=data.get('t_end_date'),
-            t_operator_id=data.get('t_operator_id'),
-            t_asset_id=data.get('t_asset_id'),
-            t_status=data.get('t_status'),
-            t_load=data.get('t_load'),
-            t_origin_place_id=data.get('t_origin_place_id'),
-            t_origin_place_query=data.get('t_origin_place_query'),
-            t_destination_place_id=data.get('t_destination_place_id'),
-            t_destination_place_query=data.get('t_destination_place_query'),
-            t_directionsResponse=data.get('t_directionsResponse'),      
-            t_distance=data.get('t_distance') if 't_distance' in data else None,
-            t_duration=data.get('t_duration'),
-        )
-        db.session.add(new_trip)
-        db.session.commit()
-        trip = new_trip.as_dict()
-        return jsonify(**trip), 201
+        request_data = request.get_json()
+
+        data = {
+            "t_created_by": user_id,
+            "t_organization_id": org_id,
+            "t_type": request_data["t_type"],
+            "t_start_lat": request_data["t_start_lat"],
+            "t_start_long": request_data["t_start_long"],
+            "t_start_elavation": request_data["t_start_elavation"] if "t_start_elavation" in request_data else None,
+            "t_end_lat": request_data["t_end_lat"],
+            "t_end_long": request_data["t_end_long"],
+            "t_end_elavation": request_data["t_end_elavation"] if "t_end_elavation" in request_data else None,
+            "t_start_date": request_data["t_start_date"],
+            "t_end_date": request_data["t_end_date"],
+            "t_operator_id": request_data["t_operator_id"],
+            "t_asset_id": request_data["t_asset_id"],
+            "t_status": request_data["t_status"],
+            "t_load": request_data["t_load"],
+            "t_origin_place_id": request_data["t_origin_place_id"],
+            "t_origin_place_query": request_data["t_origin_place_query"],
+            "t_destination_place_id": request_data["t_destination_place_id"],
+            "t_destination_place_query": request_data["t_destination_place_query"], 
+            # "t_directionsResponse": request_data["t_directionsResponse"], ignore for now
+            "t_distance": request_data["t_distance"] if "t_distance" in request_data else None,
+            "t_duration": request_data["t_duration"]
+        }
+
+        result = qtrip.add_trip(data)
+        trip = result.as_dict()
+        return jsonify(trip=trip)
 
 
 class TripByStatus(Resource):
@@ -172,10 +172,10 @@ def add_trip():
             t_type=data.get('t_type'),
             t_start_lat=data.get('t_start_lat'),
             t_start_long=data.get('t_start_long'),
-            t_start_elavation=data.get('t_start_elavation') if 't_start_elavation' in data else None,
+            t_start_elavation=data.get('t_start_elavation'),
             t_end_lat=data.get('t_end_lat'),
             t_end_long=data.get('t_end_long'),
-            t_end_elavation=data.get('t_end_elavation')if 't_end_elavation' in data else None,
+            t_end_elavation=data.get('t_end_elavation'),
             t_start_date=data.get('t_start_date'),
             t_end_date=data.get('t_end_date'),
             t_operator_id=data.get('t_operator_id'),
