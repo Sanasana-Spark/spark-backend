@@ -7,6 +7,7 @@ from .. import db
 from flask_restful import Api, Resource
 from sanasana import models
 from sanasana.query import operators as qoperator
+from sanasana.query import users as qusers
 
 bp = Blueprint('operators', __name__, url_prefix='/operators')
 api_operators = Api(bp)
@@ -39,6 +40,16 @@ class AllOperators(Resource):
         }
         result = qoperator.add_operator(data)
         operator = result.as_dict()
+        userdata = {
+            "organization_id": org_id,
+            "email": data["o_email"],
+            "role": "Driver",
+            "phone": data["o_phone"],
+            "name": data["o_name"],
+            "username": data["o_name"],
+            "status": "active"
+            }
+        qusers.add_user(userdata)
         return jsonify(operator=operator)
   
 
