@@ -292,6 +292,7 @@ class Fuel_request(db.Model):
     f_odometer_reading = db.Column(db.Float, nullable=True)
     f_receipt_image = db.Column(db.String(200), nullable=True)
     f_receipt_pdf = db.Column(db.String(200), nullable=True)
+    f_request_type = db.Column(db.String(200), default="original", nullable=True)
 
     operator = db.relationship('Operator', backref='fuel_request')
     asset = db.relationship('Asset', backref='fuel_request')

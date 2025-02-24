@@ -46,7 +46,7 @@ def allowed_file(filename):
 
 
 class FuelRequest(Resource):
-    def post(self, trip_id):
+    def post(self, org_id, user_id, trip_id):
         data = request.json
         trip_id = data["f_trip_id"]
         trip = qtrip.get_trip_by_id(trip_id)
