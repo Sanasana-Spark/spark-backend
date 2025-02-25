@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, current_app
 )
 from flask_mail import Message
 from flask_restful import Api, Resource
@@ -10,6 +10,7 @@ from sanasana.models import User, Organization
 from sanasana.query import users as qusers
 from sanasana.query import send_email as qsend_email
 import logging
+
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
 api_users = Api(bp)
@@ -45,6 +46,7 @@ class Org(Resource):
         return jsonify(Organizations_list)
     
     def post(self, org_id):
+        # with current_app.app_context():
         msg = Message(
             subject='Hello from the other side!', 
             sender='info@sanasanasustainability.com',  # Ensure this matches MAIL_USERNAME
