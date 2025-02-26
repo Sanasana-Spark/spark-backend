@@ -286,7 +286,7 @@ class Fuel_request(db.Model):
     f_litres = db.Column(db.Float, nullable=False)
     f_cost = db.Column(db.Float, nullable=True)
     f_total_cost = db.Column(db.Float, nullable=False)
-    f_distance = db.Column(db.Float, nullable=True)
+    f_distance = db.Column(db.String, nullable=True)
     f_vendor = db.Column(db.String, nullable=True)
     f_odometer_image = db.Column(db.String(200), nullable=True)
     f_odometer_reading = db.Column(db.Float, nullable=True)
