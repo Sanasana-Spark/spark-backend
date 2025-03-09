@@ -76,9 +76,24 @@ class OperatorStatus(Resource):
         return jsonify(status=status)
 
 
+class OperatorsReport(Resource):
+    def get(self, org_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        query = models.Operator.query.filter_by(o_organisation_id=org_id)
+
+        if start_date and end_date:
+            query = query.filter(models.Operator.o_created_at.between(start_date, end_date))
+
+        operators = query.all()
+        return jsonify([operator.as_dict() for operator in operators])
+    
+
 api_operators.add_resource(AllOperators, '/<org_id>/<user_id>/')
 api_operators.add_resource(OperatorById, '/<org_id>/<user_id>/<id>')
 api_operators.add_resource(OperatorStatus, '/status')
+api_operators.add_resource(OperatorsReport, '/reports/<org_id>/')
 
 
 # def get_operator_column(operator_id, column_name):

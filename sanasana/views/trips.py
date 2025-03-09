@@ -6,6 +6,7 @@ import os
 from .. import  db
 from sanasana.query import trips as qtrip
 from sanasana import models
+from sanasana.query import resources as qresources
 from flask_restful import Api, Resource
 from flask_cors import CORS
 # import pandas as pd
@@ -17,29 +18,11 @@ api_trips = Api(bp)
 
 
 class TripsByOrg(Resource):
-    def get(self, org_id):
+    def get(self, org_id, user_id):
         """ list all trips """
         trips = [trips.as_dict() for trips in 
                  qtrip.get_trip_by_org(org_id)]
         return jsonify(trips)
-    
-
-class TripsByUser(Resource):
-    def get(self, org_id, user_id):
-        """ list all trips """
-        # trips = models.Trip.query.filter_by(t_organization_id=org_id,
-        #                                     user_id=user_id).all()
-        
-        trips = (
-            models.Trip.query
-            .join(models.Operator, models.Trip.t_operator_id == models.Operator.id)  # Join Operator table
-            .join(models.User, models.User.email == models.Operator.o_email)  # Join User table through email
-            .filter(models.User.id == user_id, models.Trip.t_organization_id == org_id)  # Apply filters
-            .all() 
-        )
-
-        trips_list = [trip.as_dict() for trip in trips]
-        return jsonify(trips_list)
     
     def post(self, org_id, user_id):
         """ Add an trip """
@@ -75,6 +58,24 @@ class TripsByUser(Resource):
         return jsonify(trip=trip)
 
 
+class TripsByUser(Resource):
+    def get(self, org_id, user_id):
+        """ list all trips """
+        # trips = models.Trip.query.filter_by(t_organization_id=org_id,
+        #                                     user_id=user_id).all()
+        
+        trips = (
+            models.Trip.query
+            .join(models.Operator, models.Trip.t_operator_id == models.Operator.id)  # Join Operator table
+            .join(models.User, models.User.email == models.Operator.o_email)  # Join User table through email
+            .filter(models.User.id == user_id, models.Trip.t_organization_id == org_id)  # Apply filters
+            .all() 
+        )
+
+        trips_list = [trip.as_dict() for trip in trips]
+        return jsonify(trips_list)
+
+
 class TripByStatus(Resource):
     def get(self, org_id, user_id, t_status):
         """ list all trips """
@@ -92,23 +93,88 @@ class TripById(Resource):
         return jsonify(trip.as_dict())
     
     def post(self, org_id, user_id, trip_id):
-        data = request.json
-        t_status = data.get('t_status')
-        # if t_status is None:
-        #     t_status = "In-Progress"
-        trip = qtrip.update_status(trip_id, t_status)
-        return jsonify(trip.as_dict())
-    
+        request_data = request.json
+        or_image_data = request_data['or_image']
+        or_trip_id = trip_id
+        or_image_url = qresources.save_image(or_image_data, or_trip_id)
+        data = {
+            "or_created_by": user_id,
+            "or_organization_id": org_id,
+            "or_trip_id": request_data["or_trip_id"],
+            "or_asset_id": request_data["or_asset_id"],
+            "or_operator_id": request_data["or_operator_id"],
+            "or_image": or_image_url,
+            "or_by_drivers": float(request_data["or_by_drivers"]),
+            "or_reading": (request_data["or_reading"]),
+            "or_latitude": request_data["or_latitude"],
+            "or_longitude": request_data["or_longitude"],
+            "or_description": request_data["or_description"]
+        }
+        qtrip.add_odometer_reading(data)
+        
+        description = request_data["or_description"]
+        if description == "start_trip":
+            data = {
+                "t_start_od_reading": float(request_data["or_by_drivers"]),
+                "t_start_od_reading_url": or_image_url
+            }
+            for attribute, value in request_data.items():
+                if attribute in ["t_status", "t_start_date"]:
+                    data[attribute] = value
+                qtrip.update(trip_id, data)
+        elif description == "complete_trip":
+            data = {
+                "t_end_od_reading": float(request_data["or_by_drivers"]),
+                "t_end_od_reading_url": or_image_url
+            }
+            for attribute, value in request_data.items():
+                if attribute in ["t_status", "t_start_date"]:
+                    data[attribute] = value
+                qtrip.update(trip_id, data)
+        
+        t_status = request_data['t_status']
+        if t_status:
+            trip = qtrip.update_status(trip_id, t_status)
+            return jsonify(trip.as_dict())
+
+
+class OdometerReading(Resource):  
+    def post(self, org_id, user_id):
+        """ Add odometer reading """
+        request_data = request.get_json()
+        or_image_data = request_data['or_image']
+        or_trip_id = request_data["or_trip_id"]
+
+        or_image_url = qresources.save_image(or_image_data, or_trip_id)
+
+        data = {
+            "or_created_by": user_id,
+            "or_organization_id": org_id,
+            "or_trip_id": request_data["or_trip_id"],
+            "or_asset_id": request_data["or_asset_id"],
+            "or_operator_id": request_data["or_operator_id"],
+            "or_image": or_image_url,
+            "or_by_drivers": float(request_data["or_by_drivers"]),
+            "or_reading": (request_data["or_reading"]),
+            "or_latitude": request_data["or_latitude"],
+            "or_longitude": request_data["or_longitude"],
+            "or_description": request_data["or_description"]
+        }
+
+        result = qtrip.add_odometer_reading(data)
+        od_reading = result.as_dict()
+        return jsonify(od_reading=od_reading)  
+
 
 class TripReport(Resource):
     def get(self, org_id):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
 
-        query = Trip.query.filter_by(t_organization_id=org_id)
+        query = models.Trip.query.filter_by(t_organization_id=org_id)
 
         if start_date and end_date:
-            query = query.filter(Trip.t_created_at.between(start_date, end_date))
+            query = query.filter(models.Trip.t_created_at.between(start_date, end_date))
 
         trips = query.all()
         return jsonify([trip.as_dict() for trip in trips])
@@ -132,11 +198,11 @@ class TripReport(Resource):
 
 #         return jsonify({"message": "Report generated", "file": file_path})
 
-
-api_trips.add_resource(TripsByOrg, '/<org_id>/')
-api_trips.add_resource(TripsByUser, '/<org_id>/<user_id>/')
+api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
+api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
 # api_trips.add_resource(ExportTripReport, '/reports/export/')
 
