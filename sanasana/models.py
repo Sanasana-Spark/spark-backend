@@ -199,6 +199,14 @@ class Trip(db.Model):
     t_actual_cost = db.Column(db.Float, nullable=True)
     t_consumption_variance = db.Column(db.Float, nullable=True)
     t_cost_variance = db.Column(db.Float, nullable=True)
+
+    t_start_od_reading = db.Column(db.Float, nullable=True)
+    t_start_od_reading_url = db.Column(db.String(200), nullable=True)
+
+    t_end_od_reading = db.Column(db.Float, nullable=True)
+    t_end_od_reading_url = db.Column(db.String(200), nullable=True)
+    
+
     t_odometer_reading1 = db.Column(db.Float, nullable=True)
     t_dometer_reading2 = db.Column(db.Float, nullable=True)
     t_dometer_reading3 = db.Column(db.Float, nullable=True)
@@ -230,7 +238,36 @@ class Trip(db.Model):
         result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
         result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
         return result
-  
+
+
+class Odometer_readings(db.Model):
+    __tablename__ = 'odometer_readings'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    or_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    or_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    or_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
+    or_trip_id = db.Column(db.Integer, db.ForeignKey('assets.trips.id'), nullable=True)
+    or_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=True)
+    or_operator_id = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
+    or_image = db.Column(db.String(200), nullable=True)
+    or_by_drivers = db.Column(db.Float, nullable=True)
+    or_reading = db.Column(db.Float, nullable=True)
+    or_latitude = db.Column(db.Float, nullable=True)
+    or_longitude = db.Column(db.Float, nullable=True)
+    or_description = db.Column(db.String, nullable=True)
+
+    trip = db.relationship('Trip', backref='odometer_readings')
+    asset = db.relationship('Asset', backref='odometer_readings')
+    operator = db.relationship('Operator', backref='odometer_readings')
+
+    def __repr__(self):
+        return f'<odometer_readings {self.id}>' 
+
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
 
 class Tstatus(db.Model):
     __tablename__ = 'tstatus'  # Name of the table

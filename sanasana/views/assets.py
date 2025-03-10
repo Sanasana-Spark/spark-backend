@@ -7,6 +7,7 @@ import os
 from .. import db
 from sanasana.query import assets as qasset
 from sanasana.models import Status, Asset
+from sanasana import models
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
 
@@ -106,9 +107,24 @@ class AssetStatus(Resource):
         return jsonify(status=status)
 
 
+class AssetsReport(Resource):
+    def get(self, org_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        query = models.Asset.query.filter_by(a_organisation_id=org_id)
+
+        if start_date and end_date:
+            query = query.filter(models.Asset.a_created_at.between(start_date, end_date))
+
+        assets = query.all()
+        return jsonify([asset.as_dict() for asset in assets])
+
+
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
 api_assets.add_resource(AssetStatus, '/status')
+api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
 
 @bp.route('/')
 def get_assets():

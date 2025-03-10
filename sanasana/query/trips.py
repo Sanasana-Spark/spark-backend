@@ -81,9 +81,31 @@ def update(trip_id, data):
     trip = models.Trip.query.filter_by(
         id=trip_id
     ).first()
+    if not trip:
+        return None
     # if data['attr'] == "resolved" and data["value"]:
     #     issue.resolved_date = datetime.datetime.utcnow()
-    setattr(trip, data['attr'], data['value'])
-    db.session.add(trip)
+    for attr, value in data.items():
+        setattr(trip, attr, value)
     db.session.commit()
     return trip
+
+
+def add_odometer_reading(data):
+    odometer_reading = models.Odometer_readings()
+
+    odometer_reading.or_created_by = data["or_created_by"]
+    odometer_reading.or_organization_id = data["or_organization_id"]
+    odometer_reading.or_trip_id = data["or_trip_id"]
+    odometer_reading.or_asset_id = data["or_asset_id"]
+    odometer_reading.or_operator_id = data["or_operator_id"]
+    odometer_reading.or_image = data["or_image"]
+    odometer_reading.or_by_drivers = data["or_by_drivers"]
+    odometer_reading.or_reading = data["or_reading"]
+    odometer_reading.or_latitude = data["or_latitude"]
+    odometer_reading.or_longitude = data["or_longitude"]
+    odometer_reading.or_description = data["or_description"]
+
+    db.session.add(odometer_reading)
+    db.session.commit()
+    return odometer_reading
