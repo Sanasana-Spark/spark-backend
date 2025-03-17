@@ -166,6 +166,43 @@ class OdometerReading(Resource):
         return jsonify(od_reading=od_reading)  
 
 
+class Approve_Request(Resource):  
+    def post(self, org_id, user_id):
+        user_org = models.Organization.query.filter_by(id=org_id).first()
+        request_data = request.json
+        t_id = request_data['t_id']
+        fuel_type = request_data['a_fuel_type']
+        t_actual_cost = float(request_data['t_actual_cost'])
+
+        if fuel_type.lower() == "petrol":
+            fuel_price = user_org.org_petrol_price
+        elif fuel_type.lower() == "diesel":
+            fuel_price = user_org.org_diesel_price
+        else:
+            fuel_price = 1
+
+        t_actual_fuel = t_actual_cost/fuel_price
+
+        trip = models.Trip.query.filter_by(id=t_id).first()
+        if trip:
+            trip.t_actual_fuel = t_actual_fuel
+            trip.t_actual_cost = t_actual_cost
+            db.session.commit()
+
+        fuel_request = models.Fuel_request.query.filter_by(f_trip_id=t_id).first()
+        if fuel_request:
+            fuel_request.f_status = "Approved"
+            fuel_request.f_litres = t_actual_fuel
+            fuel_request.f_cost = fuel_price
+            fuel_request.f_total_cost = t_actual_cost
+
+            if 'image' in request_data:
+                image_data = request_data['image']
+                or_image_url = qresources.save_receipt_image(image_data, fuel_request.id)
+                fuel_request.f_receipt_image = or_image_url
+            db.session.commit()
+           
+
 class TripReport(Resource):
     def get(self, org_id):
         start_date = request.args.get('start_date')
@@ -180,29 +217,12 @@ class TripReport(Resource):
         return jsonify([trip.as_dict() for trip in trips])
 
 
-# class ExportTripReport(Resource):
-#     def get(self):
-#         org_id = request.args.get('organization_id')
-#         start_date = request.args.get('start_date')
-#         end_date = request.args.get('end_date')
-
-#         query = Trip.query.filter(Trip.t_organization_id == org_id)
-#         if start_date and end_date:
-#             query = query.filter(Trip.t_created_at.between(start_date, end_date))
-
-#         trips = [trip.as_dict() for trip in query.all()]
-#         df = pd.DataFrame(trips)
-
-#         file_path = "trip_report.xlsx"
-#         df.to_excel(file_path, index=False)
-
-#         return jsonify({"message": "Report generated", "file": file_path})
-
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
+api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
 # api_trips.add_resource(ExportTripReport, '/reports/export/')
 

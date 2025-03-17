@@ -16,12 +16,16 @@ class Organization(db.Model):
     org_size = db.Column(db.Integer, nullable=True)
     org_fiscal_start = db.Column(db.Date, nullable=True)
     org_fiscal_stop = db.Column(db.Date, nullable=True)
+    org_currency = db.Column(db.String, nullable=True)
+    org_diesel_price = db.Column(db.Float, nullable=True, default=0)
+    org_petrol_price = db.Column(db.Float, nullable=True, default=0)
 
     def __repr__(self):
         return f'<Organization {self.org_name}>'
     
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
 
 class User(db.Model):
     __tablename__ = 'users'  # Name of the table

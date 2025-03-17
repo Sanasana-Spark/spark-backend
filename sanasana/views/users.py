@@ -39,6 +39,39 @@ class AllOrg(Resource):
         return jsonify(new_org.as_dict())
 
 
+class EditOrg(Resource):
+    def put(self, org_id, admin_id):
+        user_id = admin_id
+        org = Organization.query.filter_by(id=org_id).first()
+        if not org:
+            return jsonify({'error': 'Organization not found'}), 404
+        request_data = request.json
+
+        if 'org_name' in request_data:
+            org.org_name = request_data['org_name']
+        if 'org_industry' in request_data:
+            org.org_industry = request_data['org_industry']
+        if 'org_country' in request_data:
+            org.org_country = request_data['org_country']
+        if 'org_email' in request_data:
+            org.org_email = request_data['org_email']
+        if 'org_size' in request_data:
+            org.org_size = request_data['org_size']
+        if 'org_fiscal_start' in request_data:
+            org.org_fiscal_start = request_data['org_fiscal_start']
+        if 'org_fiscal_stop' in request_data:
+            org.org_fiscal_stop = request_data['org_fiscal_stop']
+        if 'org_currency' in request_data:
+            org.org_currency = request_data['org_currency']
+        if 'org_diesel_price' in request_data:
+            org.org_diesel_price = request_data['org_diesel_price']
+        if 'org_petrol_price' in request_data:
+            org.org_petrol_price = request_data['org_petrol_price']
+        db.session.commit()
+
+        return jsonify({'message': 'Organization updated successfully'})
+
+
 class Org(Resource):
     def get(self, org_id):
         Organizations = Organization.query.filter_by(id=org_id).all()
@@ -60,7 +93,6 @@ class Org(Resource):
         message_subject = "Testing emailing"
         message_body = f"You have been invited to sanasana by org {org_id}"
         qsend_email.send_async_email(message_recipient, message_subject, message_body)
-
 
 
 class UserOrg(Resource):
@@ -148,13 +180,13 @@ class UpdateUser(Resource):
         user = User.query.filter_by(email=email, organization_id=org_id).first()
 
         if not user:
-            return jsonify({'error': 'User does not have invite'}), 404
+            return jsonify({'error': 'User does not have invite'})
 
         user.id = id
         user.username = username
         db.session.commit()
  
-        return jsonify({'message': 'User updated successfully'}), 200
+        return jsonify({'message': 'User updated successfully'})
 
 
 class EditUser(Resource):
@@ -174,6 +206,7 @@ class EditUser(Resource):
 
 
 api_users.add_resource(AllOrg, '/')
+api_users.add_resource(EditOrg, '/<org_id>/<admin_id>/')
 api_users.add_resource(Org, '/<org_id>/')
 api_users.add_resource(UserOrg, '/user_org/')
 api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
