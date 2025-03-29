@@ -1,3 +1,4 @@
+import datetime
 from flask import (
     Blueprint,  jsonify, request, abort
 )
@@ -69,6 +70,7 @@ class TripsByUser(Resource):
             .join(models.Operator, models.Trip.t_operator_id == models.Operator.id)  # Join Operator table
             .join(models.User, models.User.email == models.Operator.o_email)  # Join User table through email
             .filter(models.User.id == user_id, models.Trip.t_organization_id == org_id)  # Apply filters
+            .order_by(models.Trip.t_created_at.desc())
             .all() 
         )
 
@@ -116,7 +118,8 @@ class TripById(Resource):
         if description == "start_trip":
             data = {
                 "t_start_od_reading": float(request_data["or_by_drivers"]),
-                "t_start_od_reading_url": or_image_url
+                "t_start_od_reading_url": or_image_url,
+                "t_started_at": datetime.datetime.utcnow()
             }
             for attribute, value in request_data.items():
                 if attribute in ["t_status", "t_start_date"]:
@@ -125,7 +128,8 @@ class TripById(Resource):
         elif description == "complete_trip":
             data = {
                 "t_end_od_reading": float(request_data["or_by_drivers"]),
-                "t_end_od_reading_url": or_image_url
+                "t_end_od_reading_url": or_image_url,
+                "t_completed_at": datetime.datetime.utcnow()
             }
             for attribute, value in request_data.items():
                 if attribute in ["t_status", "t_start_date"]:
@@ -208,13 +212,54 @@ class TripReport(Resource):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
 
-        query = models.Trip.query.filter_by(t_organization_id=org_id)
+        query = (
+            models.Trip.query
+            .filter_by(t_organization_id=org_id)
+            .order_by(models.Trip.t_created_at.desc())
+        )
 
         if start_date and end_date:
             query = query.filter(models.Trip.t_created_at.between(start_date, end_date))
 
         trips = query.all()
-        return jsonify([trip.as_dict() for trip in trips])
+
+        trips_list = [
+            {
+                "Description": trip.t_type,
+                "Operator": trip.operator.o_name,
+                "Asset": trip.asset.a_license_plate,
+                "Make-model": (trip.asset.a_make + "- " + trip.asset.a_model),
+                "Start-date": trip.t_start_date.strftime("%d.%m.%Y") if trip.t_start_date else None,
+                "End-date": trip.t_end_date.strftime("%d.%m.%Y") if trip.t_end_date else None,
+                "Origin": trip.t_origin_place_query,
+                "Destination": trip.t_destination_place_query,
+                "Status": trip.t_status,
+                "Est-duration": trip.t_duration,
+                "Actual-duration": (
+                    (trip.t_completed_at - trip.t_started_at).bit_length()
+                    if trip.t_completed_at is not None and trip.t_started_at 
+                    is not None else None
+                ),
+                "Origin-Lat": trip.t_start_lat,
+                "Origin-Lng": trip.t_start_long,
+                "Destination-Lat": trip.t_end_lat,
+                "Destination-Lng": trip.t_end_long,
+                "Tonnage": trip.t_load,
+                "Fuel-type": trip.asset.a_fuel_type,
+                "Fuel-in-Ltr": trip.t_actual_fuel,
+                "Total Cost": trip.t_actual_cost,
+                "End-od-reading": trip.t_end_od_reading,
+                "Start-Od_reading": trip.t_start_od_reading,
+                "Actual-distance": (
+                    trip.t_end_od_reading - trip.t_start_od_reading
+                    if trip.t_end_od_reading is not None and
+                    trip.t_start_od_reading is not None else None),
+                "Expected-distance": trip.t_distance,
+            }
+            for trip in trips
+        ]
+
+        return jsonify(trips_list)
 
 
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
@@ -229,7 +274,7 @@ api_trips.add_resource(TripReport, '/reports/<org_id>/')
 
 
 def get_trip_column(trip_id, column_name):
-    trip = Trip.query.get(trip_id)
+    trip = models.Trip.query.get(trip_id)
     return getattr(trip, column_name, None) if trip else None
 
 

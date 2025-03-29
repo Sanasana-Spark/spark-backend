@@ -204,9 +204,12 @@ class Trip(db.Model):
     t_consumption_variance = db.Column(db.Float, nullable=True)
     t_cost_variance = db.Column(db.Float, nullable=True)
 
+    t_started_at = db.Column(db.DateTime, nullable=True)
     t_start_od_reading = db.Column(db.Float, nullable=True)
     t_start_od_reading_url = db.Column(db.String(200), nullable=True)
 
+
+    t_completed_at = db.Column(db.DateTime, nullable=True)
     t_end_od_reading = db.Column(db.Float, nullable=True)
     t_end_od_reading_url = db.Column(db.String(200), nullable=True)
     
