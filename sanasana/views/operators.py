@@ -87,8 +87,29 @@ class OperatorsReport(Resource):
             query = query.filter(models.Operator.o_created_at.between(start_date, end_date))
 
         operators = query.all()
-        return jsonify([operator.as_dict() for operator in operators])
-    
+
+        operators_list = [
+            {
+                "o_created_at": operator.o_created_at.strftime("%d.%m.%Y") if operator.o_created_at else None,
+                "Name": operator.o_name,
+                "Assigned Asset": operator.asset.a_license_plate,
+                "National ID": operator.o_national_id,
+                "Phone": operator.o_phone,
+                "Email": operator.o_email,
+                "Role": operator.o_role,
+                "Status": operator.o_status,
+                "Cumulative Mileage": operator.o_cum_mileage,
+                "Experience": operator.o_expirence,
+                "License ID": operator.o_lincense_id,
+                "License Type": operator.o_lincense_type,
+                "License Expiry": operator.o_lincense_expiry.strftime("%d.%m.%Y") if operator.o_lincense_expiry else None,
+               
+            }
+            for operator in operators
+        ]
+
+        return jsonify(operators_list)
+
 
 api_operators.add_resource(AllOperators, '/<org_id>/<user_id>/')
 api_operators.add_resource(OperatorById, '/<org_id>/<user_id>/<id>')

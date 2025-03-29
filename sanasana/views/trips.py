@@ -274,7 +274,7 @@ api_trips.add_resource(TripReport, '/reports/<org_id>/')
 
 
 def get_trip_column(trip_id, column_name):
-    trip = Trip.query.get(trip_id)
+    trip = models.Trip.query.get(trip_id)
     return getattr(trip, column_name, None) if trip else None
 
 
