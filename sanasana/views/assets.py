@@ -2,11 +2,12 @@ from flask import (
     Blueprint,  jsonify, request
 )
 from flask_restful import Api, Resource
+from sqlalchemy import func, and_, cast, Numeric
 from werkzeug.utils import secure_filename
 import os
 from .. import db
 from sanasana.query import assets as qasset
-from sanasana.models import Status, Asset
+from sanasana.models import Status, Asset, Trip
 from sanasana import models
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
@@ -105,6 +106,65 @@ class AssetStatus(Resource):
         result = qasset.add_status(data)
         status = result.as_dict()
         return jsonify(status=status)
+    
+
+class FleetPerformance(Resource):
+    def get(self, org_id):
+         # Get query parameters for date filtering
+        start_date = request.args.get("start_date")  # Format: 'YYYY-MM-DD'
+        end_date = request.args.get("end_date")  # Format: 'YYYY-MM-DD'
+
+        assets = (
+            db.session.query(
+                Asset.id.label("id"),
+                Asset.a_license_plate.label("a_license_plate"),
+                Asset.a_make.label("a_make"),
+                Asset.a_model.label("a_model"),
+                Asset.a_year.label("a_year"),
+                Asset.a_efficiency_rate.label("a_efficiency_rate"),
+                func.count(Trip.id).label("trip_count"),
+                func.sum(
+                    cast(
+                        func.regexp_replace(Trip.t_distance, '[^0-9.]', '', 'g'),  # Remove non-numeric characters
+                        Numeric
+                    )).label("total_miles"),  # Cast t_distance to Numeric
+                func.sum(Trip.t_actual_fuel).label("total_fuel"),
+                func.sum(Trip.t_actual_cost).label("total_cost"),
+
+            )
+            .filter(Asset.a_organisation_id == org_id)
+            .join(Trip, Asset.id == Trip.t_asset_id)
+            .group_by(Asset.id) 
+            .order_by(func.sum(cast(func.regexp_replace(Trip.t_distance, '[^0-9.]', '', 'g'), Numeric)).desc())
+        )
+           # Apply date filtering if both start_date and end_date are provided
+        if start_date and end_date:
+            query = assets.filter(
+                and_(
+                    func.date(Trip.t_start_date) >= start_date,
+                    func.date(Trip.t_start_date) <= end_date,
+                )
+            )
+
+        results = query.all()
+        # Convert query results to JSON
+        fleet_data = [
+            {
+                "id": row.id,
+                "a_license_plate": row.a_license_plate,
+                "a_make": row.a_make,
+                "a_model": row.a_model,
+                "a_year": row.a_year,
+                "a_efficiency_rate": row.a_efficiency_rate,
+                "trip_count": row.trip_count,
+                "total_miles": row.total_miles,
+                "total_fuel": row.total_fuel,
+                "total_cost": row.total_cost,
+            }
+            for row in results
+        ]
+
+        return jsonify(fleet_data=fleet_data)    
 
 
 class AssetsReport(Resource):
@@ -125,6 +185,7 @@ api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
 api_assets.add_resource(AssetStatus, '/status')
 api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
+api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
 
 @bp.route('/')
 def get_assets():
