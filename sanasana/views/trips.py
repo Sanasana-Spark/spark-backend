@@ -205,7 +205,68 @@ class Approve_Request(Resource):
                 or_image_url = qresources.save_receipt_image(image_data, fuel_request.id)
                 fuel_request.f_receipt_image = or_image_url
             db.session.commit()
-           
+
+            expense_data = {
+                "te_created_by": user_id,
+                "te_organization_id": org_id,
+                "te_trip_id": t_id,
+                "te_asset_id": trip.t_asset_id,
+                "te_operator_id": trip.t_operator_id,
+                "te_type": "Fuel",
+                "te_description": "Fuel request approved",
+                "te_amount": t_actual_cost
+                }
+            qtrip.add_trip_expense(expense_data)
+
+
+class Trip_income(Resource):
+    def get(self, org_id, user_id, trip_id):
+        income = models.TripIncome.query.filter_by(ti_organization_id=org_id, ti_trip_id=trip_id).all()
+        income_list = [income.as_dict() for income in income]
+        return jsonify(income_list)
+ 
+    def post(self, org_id, user_id, trip_id):
+        """ Add trip income """
+        request_data = request.get_json()
+        data = {
+            "ti_created_by": user_id,
+            "ti_organization_id": org_id,
+            "ti_trip_id": trip_id,
+            "ti_asset_id": request_data["ti_asset_id"],
+            "ti_operator_id": request_data["ti_operator_id"],
+            "ti_client_id": request_data["ti_client_id"],
+            "ti_type": request_data["ti_type"],
+            "ti_description": request_data["ti_description"],
+            "ti_amount": request_data["ti_amount"]
+        }
+        result = qtrip.add_trip_income(data)
+        trip_income = result.as_dict()
+        return jsonify(trip_income=trip_income)
+
+
+class TripExpense(Resource):
+    def get(self, org_id, user_id, trip_id):
+        expense = models.TripExpense.query.filter_by(te_organization_id=org_id, te_trip_id=trip_id).all()
+        expense_list = [expense.as_dict() for expense in expense]
+        return jsonify(expense_list)
+ 
+    def post(self, org_id, user_id, trip_id):
+        """ Add trip income """
+        request_data = request.get_json()
+        data = {
+            "te_created_by": user_id,
+            "te_organization_id": org_id,
+            "te_trip_id": trip_id,
+            "te_asset_id": request_data["te_asset_id"],
+            "te_operator_id": request_data["te_operator_id"],
+            "te_type": request_data["te_type"],
+            "te_description": request_data["te_description"],
+            "te_amount": request_data["te_amount"]
+        }
+        result = qtrip.add_trip_expense(data)
+        trip_expense = result.as_dict()
+        return jsonify(trip_expense=trip_expense)
+
 
 class TripReport(Resource):
     def get(self, org_id):
@@ -268,6 +329,8 @@ api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
 api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
+api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
 # api_trips.add_resource(ExportTripReport, '/reports/export/')
 
