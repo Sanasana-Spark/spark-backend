@@ -355,3 +355,101 @@ class Fuel_request(db.Model):
         result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
         result['t_distance'] = self.trip.t_distance if self.trip else None
         return result
+
+
+class Client(db.Model):
+    __tablename__ = 'clients'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True) 
+    c_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    c_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    c_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
+
+    c_name = db.Column(db.String(100), nullable=False)
+    c_email = db.Column(db.String(120), unique=True, nullable=False)
+    c_phone = db.Column(db.String(100), nullable=True)
+    c_to_email = db.Column(db.String(100), nullable=True)
+    c_emailed = db.Column(db.Boolean, nullable=True)
+
+
+    def __repr__(self):
+        return f'<Client {self.c_name}>' 
+
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
+
+class TripIncome(db.Model):
+    __tablename__ = 'trip_income'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True) 
+    ti_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    ti_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    ti_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
+
+    ti_paid_at = db.Column(db.DateTime, nullable=True)
+
+    ti_trip_id = db.Column(db.Integer, db.ForeignKey('assets.trips.id'), nullable=True)
+    ti_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=True)
+    ti_operator_id = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
+    ti_client_id = db.Column(db.Integer, db.ForeignKey('assets.clients.id'), nullable=True)
+
+    ti_status = db.Column(db.String, default='PENDING', nullable=False)
+    ti_type = db.Column(db.String, nullable=True)
+    ti_amount = db.Column(db.Float, nullable=False)
+    ti_description = db.Column(db.String(200), nullable=True)
+    ti_receipt_image = db.Column(db.String(200), nullable=True)
+    ti_receipt_pdf = db.Column(db.String(200), nullable=True)
+
+    operator = db.relationship('Operator', backref='trip_income')
+    asset = db.relationship('Asset', backref='trip_income')
+    trip = db.relationship('Trip', backref='trip_income')
+    client = db.relationship("Client", backref=db.backref("payments", lazy=True))
+
+    def __repr__(self):
+        return f'<TripIncome {self.id}>' 
+   
+    def as_dict(self):
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['o_name'] = self.operator.o_name if self.operator else None
+        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['t_status'] = self.trip.t_status if self.trip else None
+        result['c_name'] = self.client.c_name if self.client else None
+        return result
+    
+
+class TripExpense(db.Model):
+    __tablename__ = 'trip_expense'  # Name of the table
+    __table_args__ = {'schema': 'assets'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True) 
+    te_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    te_created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    te_organization_id = db.Column(db.String,  db.ForeignKey('users.organization.id'), nullable=False) 
+
+    te_trip_id = db.Column(db.Integer, db.ForeignKey('assets.trips.id'), nullable=True)
+    te_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=True)
+    te_operator_id = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
+
+    te_status = db.Column(db.String, default='PENDING', nullable=False)
+    te_type = db.Column(db.String, nullable=True)
+    te_amount = db.Column(db.Float, nullable=False)
+    te_description = db.Column(db.String(200), nullable=True)
+    te_receipt_image = db.Column(db.String(200), nullable=True)
+    te_receipt_pdf = db.Column(db.String(200), nullable=True)
+
+    operator = db.relationship('Operator', backref='trip_expense')
+    asset = db.relationship('Asset', backref='trip_expense')
+    trip = db.relationship('Trip', backref='trip_expense')
+
+    def __repr__(self):
+        return f'<TripExpense {self.id}>' 
+   
+    def as_dict(self):
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['o_name'] = self.operator.o_name if self.operator else None
+        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['t_status'] = self.trip.t_status if self.trip else None
+        return result
