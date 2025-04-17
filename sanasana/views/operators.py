@@ -57,6 +57,26 @@ class OperatorById(Resource):
     def get(self, org_id, user_id, id):
         data = qoperator.get_operator_by_id(org_id, id).as_dict()
         return jsonify(data)
+    
+    def put(self, org_id, user_id, id):
+        data = request.get_json()
+        data = {k.strip().lower(): v for k, v in data.items()}
+
+        data = {
+            "o_organisation_id": org_id,
+            "id": id,
+        }
+        optional_fields = [ 
+            "o_assigned_asset", "o_cum_mileage", "o_email", "o_expirence",
+            "o_lincense_expiry", "o_lincense_id", "o_lincense_type",
+            "o_name", "o_national_id", "o_phone", "o_role", "o_status" 
+        ]
+        for field in optional_fields:
+            if field in data:
+                data[field] = data[field] 
+        result = qoperator.update_operator(data)
+        operator = result.as_dict()
+        return jsonify(operator=operator)
 
 
 class OperatorStatus(Resource):

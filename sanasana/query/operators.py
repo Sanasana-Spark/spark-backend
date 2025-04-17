@@ -47,3 +47,16 @@ def add_operator_status(data):
     db.session.add(status)
     db.session.commit()
     return status
+
+
+def update_operator(data):
+    operator = Operator.query.filter_by(
+        id=data["id"],
+        o_organisation_id=data["o_organisation_id"]
+        ).first()
+    if operator:
+        for key, value in data.items():
+            if hasattr(operator, key) and key != "id":
+                setattr(operator, key, value)
+        db.session.commit()
+    return operator
