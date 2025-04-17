@@ -59,6 +59,15 @@ class TripsByOrg(Resource):
         return jsonify(trip=trip)
 
 
+class TripsByAsset(Resource):
+    def get(self, org_id, user_id, asset_id):
+        """ list all trips """
+        trips = models.Trip.query.filter_by(t_organization_id=org_id,
+                                            t_asset_id=asset_id).all()
+        trips_list = [trip.as_dict() for trip in trips]
+        return jsonify(trips_list)
+
+
 class TripsByUser(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
@@ -244,6 +253,16 @@ class Trip_income(Resource):
         return jsonify(trip_income=trip_income)
 
 
+class TripIncomeByAsset(Resource):
+    def get(self, org_id, user_id, asset_id):
+        income = models.TripIncome.query.filter_by(
+            ti_organization_id=org_id,
+            ti_asset_id=asset_id
+        ).all()
+        income_list = [income.as_dict() for income in income]
+        return jsonify(income_list)
+
+
 class TripExpense(Resource):
     def get(self, org_id, user_id, trip_id):
         expense = models.TripExpense.query.filter_by(te_organization_id=org_id, te_trip_id=trip_id).all()
@@ -266,6 +285,16 @@ class TripExpense(Resource):
         result = qtrip.add_trip_expense(data)
         trip_expense = result.as_dict()
         return jsonify(trip_expense=trip_expense)
+
+
+class TripExpenseByAsset(Resource):
+    def get(self, org_id, user_id, asset_id):
+        expense = models.TripIncome.query.filter_by(
+            te_organization_id=org_id,
+            te_asset_id=asset_id
+        ).all()
+        expense_list = [expense.as_dict() for expense in expense]
+        return jsonify(expense_list)
 
 
 class TripReport(Resource):
@@ -324,13 +353,16 @@ class TripReport(Resource):
 
 
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
+api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
 api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
 api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(TripIncomeByAsset, '/income/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(TripExpenseByAsset, '/expense/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
 # api_trips.add_resource(ExportTripReport, '/reports/export/')
 
