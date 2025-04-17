@@ -369,6 +369,8 @@ class Client(db.Model):
     c_name = db.Column(db.String(100), nullable=False)
     c_email = db.Column(db.String(120), unique=True, nullable=False)
     c_phone = db.Column(db.String(100), nullable=True)
+    c_address = db.Column(db.String(200), nullable=True)
+    c_status = db.Column(db.String(50), nullable=False, default="Active" )
     c_to_email = db.Column(db.String(100), nullable=True)
     c_emailed = db.Column(db.Boolean, nullable=True)
 
@@ -402,6 +404,12 @@ class TripIncome(db.Model):
     ti_description = db.Column(db.String(200), nullable=True)
     ti_receipt_image = db.Column(db.String(200), nullable=True)
     ti_receipt_pdf = db.Column(db.String(200), nullable=True)
+
+    ti_balance = db.Column(db.Float, nullable=True)
+    ti_payment_method = db.Column(db.String(200), nullable=True)
+    ti_payment_date = db.Column(db.DateTime, nullable=True)
+    ti_payment_status = db.Column(db.String(200), nullable=True)
+    ti_payment_reference = db.Column(db.String(200), nullable=True)
 
     operator = db.relationship('Operator', backref='trip_income')
     asset = db.relationship('Asset', backref='trip_income')
