@@ -90,6 +90,28 @@ class AssetById(Resource):
         assets = qasset.get_asset_by_id(org_id, id).as_dict()
         return jsonify(assets)
     
+    def put(self, org_id, user_id, id):
+        data = request.get_json()
+        data = {k.strip().lower(): v for k, v in data.items()}
+
+        data = {
+            "a_organisation_id": org_id,
+            "id": id
+        }
+
+        optional_fields = [
+            "a_make", "a_model", "a_year", "a_license_plate", "a_fuel_type",
+            "a_tank_size", "a_displacement", "a_mileage", "a_horsepower",
+            "a_acceleration", "a_insurance_expiry"
+        ]
+
+        for field in optional_fields:
+            if field in data:
+                data[field] = data[field]
+            result = qasset.update_asset(data)
+            asset = result.as_dict()
+            return jsonify(asset=asset)
+    
 
 class AssetStatus(Resource):
     def get(self):

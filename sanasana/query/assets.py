@@ -63,3 +63,16 @@ def add_status(data):
     db.session.add(status)
     db.session.commit()
     return status
+
+
+def update_asset(data):
+    asset = Asset.query.filter_by(
+        id=data["id"],
+        a_organisation_id=data["a_organisation_id"]
+        ).first()
+    if asset:
+        for key, value in data.items():
+            if hasattr(asset, key) and key != "id":
+                setattr(asset, key, value)
+        db.session.commit()
+    return asset
