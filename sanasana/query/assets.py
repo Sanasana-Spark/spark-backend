@@ -76,3 +76,33 @@ def update_asset(data):
                 setattr(asset, key, value)
         db.session.commit()
     return asset
+
+
+def add_invoice(asset_id, data):
+    """
+    Add a new invoice for a client.
+    """
+    invoice = models.TripIncome(ti_client_id=asset_id)
+    for key, value in data.items():
+        if hasattr(invoice, key):
+            setattr(invoice, key, value)
+        else:
+            raise ValueError(f"Invalid attribute '{key}' for Invoice model")
+    db.session.add(invoice)
+    db.session.commit()
+    return invoice
+
+
+def add_asset_expense(asset_id, data):
+    """
+    Add a new invoice for a client.
+    """
+    invoice = models.TripIncome(ti_client_id=asset_id)
+    for key, value in data.items():
+        if hasattr(invoice, key):
+            setattr(invoice, key, value)
+        else:
+            raise ValueError(f"Invalid attribute '{key}' for Invoice model")
+    db.session.add(invoice)
+    db.session.commit()
+    return invoice
