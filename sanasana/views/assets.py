@@ -55,36 +55,6 @@ class Assets(Resource):
         asset = result.as_dict()
         return jsonify(asset=asset)
 
-#To Fix
-                # a_type=data.get('a_type', ''),        
-                # a_chasis_no=data.get('a_chasis_no', ''),
-                # a_msrp=float(data.get('a_msrp', 0)),
-                # a_engine_size=float(data.get('a_engine_size', 0)),
-                # a_efficiency_rate=float(data.get('a_efficiency_rate', 0)),
-                # a_cost=float(data.get('a_cost', 0)),
-                # a_value=float(data.get('a_value', 0)),
-                # a_depreciation_rate=float(data.get('a_depreciation_rate', 0)),
-                # a_apreciation_rate=float(data.get('a_apreciation_rate', 0)),
-                # a_accumulated_dep=float(data.get('a_accumulated_dep', 0)),
-                # a_status=data.get('a_status', ''),
-                # a_attached_card=data.get('a_attached_card')
-
-            # if 'a_image' in files:
-            #     image_file = files['a_image']
-            #     image_filename = secure_filename(image_file.filename)
-            #     image_path = os.path.join('images/assets', image_filename)
-            #     image_file.save(image_path)
-            #     new_asset.a_image = image_path
-
-            # for attachment in ['a_attachment1', 'a_attachment2', 'a_attachment3']:
-            #     if attachment in files:
-            #         file = files[attachment]
-            #         filename = secure_filename(file.filename)
-            #         file_path = os.path.join('images/assets', filename)
-            #         file.save(file_path)
-            #         setattr(new_asset, attachment, file_path)
-
-
 class AssetById(Resource):
     def get(self, org_id, user_id, id):
         assets = qasset.get_asset_by_id(org_id, id).as_dict()
@@ -203,11 +173,112 @@ class AssetsReport(Resource):
         return jsonify([asset.as_dict() for asset in assets])
 
 
+class IncomeByAssetId(Resource):
+    def get(self, org_id, user_id, asset_id):
+        invoices = models.TripIncome.query.filter(
+            and_(
+                models.TripIncome.ti_organization_id == org_id,
+                models.TripIncome.ti_asset_id.isnot(None),
+                models.TripIncome.ti_asset_id == asset_id,
+                models.TripIncome.ti_status != "deleted"
+            )
+        ).all()
+        invoices = [invoice.as_dict() for invoice in invoices]
+        return jsonify(invoices=invoices)
+    
+    def post(self, org_id, user_id, asset_id):
+        """ Add a invoice """
+        request_data = request.get_json()
+
+        data = {
+            "ti_created_by": user_id,
+            "ti_organization_id": org_id,
+            "ti_client_id": request_data["client_id"],
+            "ti_asset_id": asset_id,
+            "ti_type": request_data["ti_type"],
+            "ti_description" : request_data["ti_description"],
+            "ti_amount": request_data["ti_amount"],
+            "ti_status": request_data["ti_status"]
+        }
+
+        result = qasset.add_invoice(asset_id, data)
+        invoice = result.as_dict()
+        return jsonify(invoice=invoice)
+    
+    def put(self, org_id, user_id, client_id):
+        """ Update a client """
+        request_data = request.get_json()
+
+        data = {
+            "ti_created_by": user_id,
+            "ti_organization_id": org_id,
+            "ti_client_id": client_id,
+            "ti_amount": request_data["ti_amount"],
+            "ti_date": request_data["ti_date"],
+            "ti_status": request_data["ti_status"]
+        }
+
+        result = qclients.update_invoice(data)
+        invoice = result.as_dict()
+        return jsonify(invoice=invoice)
+
+
+class ExpenseByAssetId(Resource):
+    def get(self, org_id, user_id, asset_id):
+        expenses = models.TripExpense.query.filter(
+            and_(
+                models.TripExpense.te_organization_id == org_id,
+                models.TripExpense.te_asset_id.isnot(None),
+                models.TripExpense.te_asset_id == asset_id,
+                models.TripExpense.te_status != "deleted"
+                
+            )
+        ).all()
+        expenses = [expense.as_dict() for expense in expenses]
+        return jsonify(expenses=expenses)
+    
+    def post(self, org_id, user_id, asset_id):
+        """ Add asset expense """
+        request_data = request.get_json()
+        data = {
+            "te_created_by": user_id,
+            "te_organization_id": org_id,
+            "te_trip_id": request_data["trip_id"],
+            "te_asset_id": asset_id,
+            "te_operator_id": request_data["te_operator_id"],
+            "te_type": request_data["te_type"],
+            "te_description": request_data["te_description"],
+            "te_amount": request_data["te_amount"]
+        }
+        result = qasset.add_asset_expense(asset_id, data)
+        asset_expense = result.as_dict()
+        return jsonify(asset_expense=asset_expense)
+    
+    def put(self, org_id, user_id, asset_id):
+        """ Update a client """
+        request_data = request.get_json()
+
+        data = {
+            "ti_created_by": user_id,
+            "ti_organization_id": org_id,
+            "ti_asset_id": asset_id,
+            "ti_amount": request_data["ti_amount"],
+            "ti_date": request_data["ti_date"],
+            "ti_status": request_data["ti_status"]
+        }
+
+        result = qclients.update_invoice(data)
+        invoice = result.as_dict()
+        return jsonify(invoice=invoice)
+
+
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
 api_assets.add_resource(AssetStatus, '/status')
 api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
 api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
+api_assets.add_resource(IncomeByAssetId, '/income/<org_id>/<user_id>/<asset_id>/')
+api_assets.add_resource(ExpenseByAssetId, '/expense/<org_id>/<user_id>/<asset_id>/')
 
 @bp.route('/')
 def get_assets():
