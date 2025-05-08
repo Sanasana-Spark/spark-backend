@@ -65,16 +65,25 @@ def add_status(data):
     return status
 
 
-def update_asset(data):
-    asset = Asset.query.filter_by(
-        id=data["id"],
-        a_organisation_id=data["a_organisation_id"]
-        ).first()
-    if asset:
-        for key, value in data.items():
-            if hasattr(asset, key) and key != "id":
-                setattr(asset, key, value)
-        db.session.commit()
+def update_asset(asset_id, data):
+    asset = models.Asset.query.get(asset_id)
+    if not asset:
+        raise ValueError(f"Asset with ID {asset_id} not found")
+    for key, value in data.items():
+        if hasattr(asset, key):
+            setattr(asset, key, value)
+        else:
+            raise ValueError(f"Invalid attribute '{key}' for asset model")
+    db.session.commit()
+    return asset
+
+
+def delete_asset(asset_id):
+    asset = models.Asset.query.get(asset_id)
+    if not asset:
+        raise ValueError(f"Asset with ID {asset_id} not found")
+    db.session.delete(asset)
+    db.session.commit()
     return asset
 
 

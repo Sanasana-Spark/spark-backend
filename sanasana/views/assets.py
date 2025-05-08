@@ -55,32 +55,59 @@ class Assets(Resource):
         asset = result.as_dict()
         return jsonify(asset=asset)
 
+
 class AssetById(Resource):
-    def get(self, org_id, user_id, id):
-        assets = qasset.get_asset_by_id(org_id, id).as_dict()
+    def get(self, org_id, user_id, asset_id):
+        assets = qasset.get_asset_by_id(org_id, asset_id).as_dict()
         return jsonify(assets)
     
-    def put(self, org_id, user_id, id):
-        data = request.get_json()
-        data = {k.strip().lower(): v for k, v in data.items()}
+    def put(self, org_id, user_id, asset_id):
+        """ Update a asset """
+        request_data = request.get_json()
 
         data = {
+            "a_created_by": user_id,
             "a_organisation_id": org_id,
-            "id": id
         }
 
-        optional_fields = [
-            "a_make", "a_model", "a_year", "a_license_plate", "a_fuel_type",
-            "a_tank_size", "a_displacement", "a_mileage", "a_horsepower",
-            "a_acceleration", "a_insurance_expiry"
-        ]
+        if "a_name" in request_data:
+            data["a_name"] = request_data["a_name"]
+        if "a_make" in request_data:
+            data["a_make"] = request_data["a_make"]
+        if "a_model" in request_data:
+            data["a_model"] = request_data["a_model"]
+        if "a_year" in request_data:
+            data["a_year"] = request_data["a_year"]
+        if "a_license_plate" in request_data:
+            data["a_license_plate"] = request_data["a_license_plate"]
+        if "a_fuel_type" in request_data:
+            data["a_fuel_type"] = request_data["a_fuel_type"]
+        if "a_tank_size" in request_data:
+            data["a_tank_size"] = request_data["a_tank_size"]
+        if "a_displacement" in request_data:
+            data["a_displacement"] = request_data["a_displacement"]
+        if "a_mileage" in request_data:
+            data["a_mileage"] = request_data["a_mileage"]
+        if "a_horsepower" in request_data:
+            data["a_horsepower"] = request_data["a_horsepower"]
+        if "a_acceleration" in request_data:
+            data["a_acceleration"] = request_data["a_acceleration"]
+        if "insurance_expiry" in request_data:
+            data["insurance_expiry"] = request_data["insurance_expiry"]
+        if "status" in request_data:
+            data["status"] = request_data["status"]
 
-        for field in optional_fields:
-            if field in data:
-                data[field] = data[field]
-            result = qasset.update_asset(data)
-            asset = result.as_dict()
-            return jsonify(asset=asset)
+        result = qasset.update_asset(asset_id, data)
+        asset = result.as_dict()
+        return jsonify(asset=asset)
+    
+    def delete(self, org_id, user_id, asset_id):
+        """ Delete a asset """
+        result = qasset.delete_asset(asset_id)
+        if result:
+            return jsonify(message="Asset deleted successfully")
+        else:
+            return jsonify(message="Asset not found"), 404
     
 
 class AssetStatus(Resource):
@@ -273,7 +300,7 @@ class ExpenseByAssetId(Resource):
 
 
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
-api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<id>')
+api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<asset_id>/')
 api_assets.add_resource(AssetStatus, '/status')
 api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
 api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
