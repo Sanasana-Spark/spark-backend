@@ -39,7 +39,48 @@ class ClientsByOrg(Resource):
         result = qclients.add_client(data)
         client = result.as_dict()
         return jsonify(client=client)
+
+
+class ClientById(Resource):
+    def get(self, org_id, user_id, client_id):
+        """ list all clients """
+        client = models.Client.query.filter_by(
+            c_organization_id=org_id,
+            id=client_id
+        ).first()
+        if not client:
+            abort(404)
+        client = client.as_dict()
+        return jsonify(client=client)
     
+    def put(self, org_id, user_id, client_id):
+        """ Update a client """
+        request_data = request.get_json()
+
+        data = {
+            "c_created_by": user_id,
+            "c_organization_id": org_id,
+        }
+
+        if "c_name" in request_data:
+            data["c_name"] = request_data["c_name"]
+        if "c_email" in request_data:
+            data["c_email"] = request_data["c_email"]
+        if "c_phone" in request_data:
+            data["c_phone"] = request_data["c_phone"]
+        if "c_status" in request_data:
+            data["c_status"] = request_data["c_status"]
+
+        result = qclients.update_client(client_id, data)
+        client = result.as_dict()
+        return jsonify(client=client)   
+
+    def delete(self, org_id, user_id, client_id):
+        """ Delete a client """
+        result = qclients.delete_client(client_id)
+        client = result.as_dict()
+        return jsonify(client=client) 
+
 
 class Invoices(Resource):
     def get(self, org_id, user_id):
@@ -102,5 +143,6 @@ class InvoicesByClientId(Resource):
 
 
 api_clients.add_resource(ClientsByOrg, '/<org_id>/<user_id>/')
+api_clients.add_resource(ClientById, '/<org_id>/<user_id>/<client_id>/')
 api_clients.add_resource(Invoices, '/invoices/<org_id>/<user_id>/')
 api_clients.add_resource(InvoicesByClientId, '/invoices/<org_id>/<user_id>/<client_id>/')
