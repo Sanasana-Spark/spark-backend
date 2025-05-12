@@ -76,8 +76,11 @@ class OperatorById(Resource):
 
     def delete(self, org_id, user_id, id):
         """Delete operator"""
-        result = qoperator.delete_operator_by_id(id)
-        return jsonify(result)
+        result = qoperator.delete_operator(id)
+        if result:
+            return jsonify(message="Operator deleted successfully")
+        else:
+            return jsonify(message="Operator not found"), 404
 
 
 class OperatorStatus(Resource):
@@ -142,7 +145,7 @@ class OperatorsReport(Resource):
 
 
 api_operators.add_resource(AllOperators, "/<org_id>/<user_id>/")
-api_operators.add_resource(OperatorById, "/<org_id>/<user_id>/<id>")
+api_operators.add_resource(OperatorById, "/<org_id>/<user_id>/<id>/")
 api_operators.add_resource(OperatorStatus, "/status")
 api_operators.add_resource(OperatorsReport, "/reports/<org_id>/")
 
