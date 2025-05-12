@@ -36,23 +36,12 @@ def add_operator(data):
     return operator
 
 
-def delete_operator_by_id(operator_id):
+def delete_operator(operator_id):
     operator = models.Operator.query.get(operator_id)
-
     if not operator:
-        # raise ValueError(f"Operator with ID {operator_id} not found")
-        message = "operator not found"
-        return message
-    try:
-        db.session.delete(operator)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        message = "failed to delete operator"
-        return message
-        # print(f"Error deleting operator: {str(e)}")
-        # or use: traceback.print_exc()
-        # raise  # re-raise if you want to catch it higher up
+        raise ValueError(f"Asset with ID {operator_id} not found")
+    db.session.delete(operator)
+    db.session.commit()
     return operator
 
 
