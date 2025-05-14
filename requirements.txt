@@ -27,3 +27,4 @@ SQLAlchemy==2.0.31
 typing-extensions==4.12.2
 werkzeug==3.0.3
 zipp==3.19.2
+python-dateutil==2.9.0.post0

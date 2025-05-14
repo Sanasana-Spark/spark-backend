@@ -4,7 +4,9 @@ from flask import (
 from flask_restful import Api, Resource
 from sqlalchemy import func, and_, cast, Numeric
 from werkzeug.utils import secure_filename
+from dateutil.relativedelta import relativedelta
 import os
+import datetime
 from .. import db
 from sanasana.query import assets as qasset
 from sanasana.models import Status, Asset, Trip
@@ -273,10 +275,34 @@ class ExpenseByAssetId(Resource):
         return jsonify(invoice=invoice)
 
 
+class AssetPerformance(Resource):
+    def post(self, org_id):
+        data = request.get_json()
+        report_type = data.get("report_type")
+
+        end_date = datetime.datetime.now()
+        start_date = None
+
+        match report_type:
+            case "daily":
+                start_date = end_date - datetime.timedelta(days=1)
+            case "weekly":
+                start_date = end_date - datetime.timedelta(weeks=1)
+            case "monthly":
+                # Handle month start - safe for month boundaries
+                start_date = end_date - relativedelta(months=1)
+            case _:
+                return jsonify({"error": "Invalid report type"}), 400
+
+        report = qasset.get_asset_performance(start_date, end_date)
+        return jsonify(report)
+    
+
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<asset_id>/')
 api_assets.add_resource(AssetStatus, '/status')
 api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
+api_assets.add_resource(AssetPerformance, '/asset_performance/<org_id>/')
 api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
 api_assets.add_resource(IncomeByAssetId, '/income/<org_id>/<user_id>/<asset_id>/')
 api_assets.add_resource(ExpenseByAssetId, '/expense/<org_id>/<user_id>/<asset_id>/')
