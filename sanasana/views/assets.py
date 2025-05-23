@@ -277,8 +277,9 @@ class ExpenseByAssetId(Resource):
 
 class AssetPerformance(Resource):
     def post(self, org_id):
-        data = request.get_json()
-        report_type = data.get("report_type")
+        report_type = request.args.get("report_type")
+        if not report_type:
+            report_type = "monthly"
 
         end_date = datetime.datetime.now()
         start_date = None
