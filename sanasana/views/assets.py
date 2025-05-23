@@ -291,7 +291,7 @@ class AssetPerformance(Resource):
         elif report_type == "monthly":
             start_date = end_date - relativedelta(months=1)
 
-        report = qasset.get_asset_performance(start_date, end_date)
+        report = qasset.get_asset_performance(org_id, start_date, end_date)
         return jsonify(report)
     
 

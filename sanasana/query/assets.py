@@ -119,7 +119,7 @@ def add_asset_expense(asset_id, data):
 
 
 
-def get_asset_performance(start_date, end_date):
+def get_asset_performance(org_id, start_date, end_date):
     """
     Returns performance summary of each asset within the specified date range.
     """
@@ -146,7 +146,8 @@ def get_asset_performance(start_date, end_date):
     ).filter(
         and_(
             Trip.t_created_at >= start_date,
-            Trip.t_created_at <= end_date
+            Trip.t_created_at <= end_date,
+            Trip.t_organisation_id == org_id
         )
     ).group_by(Trip.t_asset_id).subquery()
     
