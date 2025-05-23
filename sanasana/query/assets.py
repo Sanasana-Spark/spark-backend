@@ -123,7 +123,11 @@ def get_asset_performance(org_id, start_date, end_date):
     """
     Returns performance summary of each asset within the specified date range.
     """
-
+    org_currency = db.session.query(
+        models.Organization.org_currency
+    ).filter(
+        models.Organization.id == org_id
+    ).first()
     if isinstance(start_date, str):
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
     if isinstance(end_date, str):
@@ -147,7 +151,7 @@ def get_asset_performance(org_id, start_date, end_date):
         and_(
             Trip.t_created_at >= start_date,
             Trip.t_created_at <= end_date,
-            Trip.t_organisation_id == org_id
+            Trip.t_organization_id == org_id
         )
     ).group_by(Trip.t_asset_id).subquery()
     
@@ -174,6 +178,11 @@ def get_asset_performance(org_id, start_date, end_date):
     # Main query joining all subqueries
     results = db.session.query(
         Asset.id.label("asset_id"),
+        Asset.a_make.label("a_make"),
+        Asset.a_model.label("a_model"),
+        Asset.a_year.label("a_year"),
+        Asset.a_license_plate.label("a_license_plate"),
+        Asset.a_fuel_type.label("a_fuel_type"),
         func.coalesce(trip_subq.c.trip_count, 0).label("trip_count"),
         func.coalesce(trip_subq.c.mileage_km, 0.0).label("mileage_km"),
         func.coalesce(trip_subq.c.fuel_consumed_ltr, 0.0).label("fuel_consumed_ltr"),
@@ -193,15 +202,20 @@ def get_asset_performance(org_id, start_date, end_date):
         fuel_economy = round(fuel / mileage, 2) if mileage > 0 else 0
 
         report.append({
-            "asset_id": row.asset_id,
-            "trip_count": row.trip_count,
-            "mileage_km": float(row.mileage_km),
-            "fuel_consumed_ltr": float(row.fuel_consumed_ltr),
+            "asset id": row.asset_id,
+            "Make": row.a_make,
+            "Model": row.a_model,
+            "Year": row.a_year,
+            "License Plate": row.a_license_plate,
+            "Fuel Type": row.a_fuel_type,
+            "No of trips": row.trip_count,
+            "Mileage (Km)": f"{float(row.mileage_km or 0)} km",
+            "Fuel Consumed (Ltr)": f"{float(row.fuel_consumed_ltr)} ltr",
             "fuel_economy": fuel_economy,
-            "fuel_cost": float(row.fuel_cost),
-            "total_revenue": float(row.total_revenue),
-            "total_expense": float(row.total_expense),
-            "profit": float(row.total_revenue - row.total_expense)
+            f"fuel_cost-{org_currency}": float(row.fuel_cost),
+            f"total_revenue-{org_currency}": float(row.total_revenue),
+            f"total_expense-{org_currency}": float(row.total_expense),
+            f"profit-{org_currency}": float(row.total_revenue - row.total_expense)
         })
 
     return report

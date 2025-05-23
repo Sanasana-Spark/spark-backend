@@ -276,7 +276,7 @@ class ExpenseByAssetId(Resource):
 
 
 class AssetPerformance(Resource):
-    def post(self, org_id):
+    def get(self, org_id):
         report_type = request.args.get("report_type")
         if not report_type:
             report_type = "monthly"
