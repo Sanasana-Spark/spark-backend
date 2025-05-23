@@ -284,16 +284,12 @@ class AssetPerformance(Resource):
         end_date = datetime.datetime.now()
         start_date = None
 
-        match report_type:
-            case "daily":
-                start_date = end_date - datetime.timedelta(days=1)
-            case "weekly":
-                start_date = end_date - datetime.timedelta(weeks=1)
-            case "monthly":
-                # Handle month start - safe for month boundaries
-                start_date = end_date - relativedelta(months=1)
-            case _:
-                return jsonify({"error": "Invalid report type"}), 400
+        if report_type == "daily":
+            start_date = end_date - datetime.timedelta(days=1)
+        elif report_type == "weekly":
+            start_date = end_date - datetime.timedelta(weeks=1)
+        elif report_type == "monthly":
+            start_date = end_date - relativedelta(months=1)
 
         report = qasset.get_asset_performance(start_date, end_date)
         return jsonify(report)
