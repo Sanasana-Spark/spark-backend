@@ -10,6 +10,8 @@ from sanasana import models
 from sanasana.query import resources as qresources
 from flask_restful import Api, Resource
 from flask_cors import CORS
+from dateutil.relativedelta import relativedelta
+import datetime
 # import pandas as pd
 
 
@@ -352,6 +354,26 @@ class TripReport(Resource):
         return jsonify(trips_list)
 
 
+class internal_customer_metrics(Resource):
+    def get(self):
+        report_type = request.args.get('report_type').lower()
+        if report_type is None:
+            report_type = 'weekly'  # Default to daily if not specified
+
+        end_date = datetime.datetime.now()
+        start_date = None
+
+        if report_type == "daily":
+            start_date = end_date - datetime.timedelta(days=1)
+        if report_type == "weekly":
+            start_date = end_date - datetime.timedelta(weeks=1)
+        if report_type == "monthly":
+            # Handle month start - safe for month boundaries
+            start_date = end_date - relativedelta(months=1)
+        report = qtrip.get_internal_customer_metric_report(start_date, end_date)
+        return jsonify(report)
+
+
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
@@ -364,7 +386,7 @@ api_trips.add_resource(TripIncomeByAsset, '/income/<org_id>/<user_id>/<asset_id>
 api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripExpenseByAsset, '/expense/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
-# api_trips.add_resource(ExportTripReport, '/reports/export/')
+api_trips.add_resource(internal_customer_metrics, '/reports/internal_customer_metrics/')
 
 
 

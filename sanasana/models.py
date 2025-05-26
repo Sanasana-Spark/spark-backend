@@ -19,6 +19,10 @@ class Organization(db.Model):
     org_currency = db.Column(db.String, nullable=True)
     org_diesel_price = db.Column(db.Float, nullable=True, default=0)
     org_petrol_price = db.Column(db.Float, nullable=True, default=0)
+    org_created_at = db.Column(db.DateTime, nullable=False, default=func.now())
+    org_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    org_status = db.Column(db.String, nullable=True, default="Active")
+    org_logo = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Organization {self.org_name}>'
@@ -40,6 +44,16 @@ class User(db.Model):
     role = db.Column(db.String(), nullable=True)
     phone = db.Column(db.String(), nullable=True)
     status = db.Column(db.String(), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=func.now())
+    created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
+    image = db.Column(db.String(200), nullable=True)
+    last_login = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_superuser = db.Column(db.Boolean, default=False, nullable=True)
+    is_verified = db.Column(db.Boolean, default=False, nullable=True)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=True)
+    is_organization_admin = db.Column(db.Boolean, default=False, nullable=True)
+    is_organization_owner = db.Column(db.Boolean, default=False, nullable=True)
     
 
     def __repr__(self):

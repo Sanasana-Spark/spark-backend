@@ -4,7 +4,6 @@ from sanasana.models import Asset, Status, Trip, TripIncome, TripExpense
 from sanasana import models
 from datetime import datetime
 
-
 def get_asset_by_id(org_id, id):
     act = Asset.query.filter_by(
         id=id, a_organisation_id=org_id
