@@ -157,14 +157,14 @@ def get_internal_customer_metric_report(start_date, end_date):
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
     # # New Organizations
-    # new_organizations = db.session.query(func.count(Organization.id))\
-    #     .filter(Organization.created_at >= start_date,
-    #             Organization.created_at <= end_date).scalar()
+    new_organizations = db.session.query(func.count(Organization.id))\
+        .filter(Organization.org_created_at >= start_date,
+                Organization.org_created_at <= end_date).scalar()
 
     # # New Users
-    # new_users = db.session.query(func.count(User.id))\
-    #     .filter(User.created_at >= start_date,
-    #             User.created_at <= end_date).scalar()
+    new_users = db.session.query(func.count(User.id))\
+        .filter(User.created_at >= start_date,
+                User.created_at <= end_date).scalar()
 
     # New Driver Organizations (Operators)
     new_operators = db.session.query(func.count(Operator.id))\
@@ -199,8 +199,8 @@ def get_internal_customer_metric_report(start_date, end_date):
                 Trip.t_created_at <= end_date).scalar()
 
     return {
-        # "new_organizations": new_organizations,
-        # "new_users": new_users,
+        "new_organizations": new_organizations,
+        "new_users": new_users,
         "new_driver_organizations": new_operators,
         "total_trips": total_trips,
         "total_miles_covered": float(total_distance),
