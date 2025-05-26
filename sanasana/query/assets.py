@@ -1,7 +1,8 @@
 from sanasana import db
-from sqlalchemy import func
-from sanasana.models import Asset, Status
+from sqlalchemy import func, and_, cast, Float, String
+from sanasana.models import Asset, Status, Trip, TripIncome, TripExpense
 from sanasana import models
+from datetime import datetime
 
 def get_asset_by_id(org_id, id):
     act = Asset.query.filter_by(
@@ -114,3 +115,106 @@ def add_asset_expense(asset_id, data):
     db.session.add(invoice)
     db.session.commit()
     return invoice
+
+
+
+def get_asset_performance(org_id, start_date, end_date):
+    """
+    Returns performance summary of each asset within the specified date range.
+    """
+    org_currency = db.session.query(
+        models.Organization.org_currency
+    ).filter(
+        models.Organization.id == org_id
+    ).first()
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+    # Subqueries with CAST
+    trip_subq = db.session.query(
+        Trip.t_asset_id.label("asset_id"),
+        func.count(Trip.id).label("trip_count"),
+        func.coalesce(
+            func.sum(
+                cast(
+                    func.regexp_replace(Trip.t_distance, r'[^0-9\.]', '', 'g'),
+                    Float
+                )
+            ), 0
+        ).label("mileage_km"),
+        func.coalesce(func.sum(cast(Trip.t_actual_fuel, Float)), 0).label("fuel_consumed_ltr"),
+        func.coalesce(func.sum(cast(Trip.t_actual_cost, Float)), 0).label("fuel_cost")
+    ).filter(
+        and_(
+            Trip.t_created_at >= start_date,
+            Trip.t_created_at <= end_date,
+            Trip.t_organization_id == org_id
+        )
+    ).group_by(Trip.t_asset_id).subquery()
+    
+    income_subq = db.session.query(
+        TripIncome.ti_asset_id.label("asset_id"),
+        func.coalesce(func.sum(cast(TripIncome.ti_amount, Float)), 0).label("total_revenue")
+    ).filter(
+        and_(
+            TripIncome.ti_created_at >= start_date,
+            TripIncome.ti_created_at <= end_date
+        )
+    ).group_by(TripIncome.ti_asset_id).subquery()
+
+    expense_subq = db.session.query(
+        TripExpense.te_asset_id.label("asset_id"),
+        func.coalesce(func.sum(cast(TripExpense.te_amount, Float)), 0).label("total_expense")
+    ).filter(
+        and_(
+            TripExpense.te_created_at >= start_date,
+            TripExpense.te_created_at <= end_date
+        )
+    ).group_by(TripExpense.te_asset_id).subquery()
+
+    # Main query joining all subqueries
+    results = db.session.query(
+        Asset.id.label("asset_id"),
+        Asset.a_make.label("a_make"),
+        Asset.a_model.label("a_model"),
+        Asset.a_year.label("a_year"),
+        Asset.a_license_plate.label("a_license_plate"),
+        Asset.a_fuel_type.label("a_fuel_type"),
+        func.coalesce(trip_subq.c.trip_count, 0).label("trip_count"),
+        func.coalesce(trip_subq.c.mileage_km, 0.0).label("mileage_km"),
+        func.coalesce(trip_subq.c.fuel_consumed_ltr, 0.0).label("fuel_consumed_ltr"),
+        func.coalesce(trip_subq.c.fuel_cost, 0.0).label("fuel_cost"),
+        func.coalesce(income_subq.c.total_revenue, 0.0).label("total_revenue"),
+        func.coalesce(expense_subq.c.total_expense, 0.0).label("total_expense")
+    ).outerjoin(trip_subq, trip_subq.c.asset_id == Asset.id)\
+     .outerjoin(income_subq, income_subq.c.asset_id == Asset.id)\
+     .outerjoin(expense_subq, expense_subq.c.asset_id == Asset.id)\
+     .all()
+
+    # Format results
+    report = []
+    for row in results:
+        mileage = row.mileage_km or 0
+        fuel = row.fuel_consumed_ltr or 0
+        fuel_economy = round(fuel / mileage, 2) if mileage > 0 else 0
+
+        report.append({
+            "asset id": row.asset_id,
+            "Make": row.a_make,
+            "Model": row.a_model,
+            "Year": row.a_year,
+            "License Plate": row.a_license_plate,
+            "Fuel Type": row.a_fuel_type,
+            "No of trips": row.trip_count,
+            "Mileage (Km)": f"{float(row.mileage_km or 0)} km",
+            "Fuel Consumed (Ltr)": f"{float(row.fuel_consumed_ltr)} ltr",
+            "fuel_economy": fuel_economy,
+            f"fuel_cost-{org_currency}": float(row.fuel_cost),
+            f"total_revenue-{org_currency}": float(row.total_revenue),
+            f"total_expense-{org_currency}": float(row.total_expense),
+            f"profit-{org_currency}": float(row.total_revenue - row.total_expense)
+        })
+
+    return report
