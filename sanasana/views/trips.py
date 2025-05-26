@@ -354,12 +354,11 @@ class TripReport(Resource):
         return jsonify(trips_list)
 
 
-
-class ExportTripReport(Resource):
+class internal_customer_metrics(Resource):
     def get(self):
-        report_type = request.args.get('report_type', 'daily').lower()
-        if report_type not in ['daily', 'weekly', 'monthly']:
-            return jsonify({"error": "Invalid report type. Use 'daily', 'weekly', or 'monthly'."}), 400
+        report_type = request.args.get('report_type').lower()
+        if report_type is None:
+            report_type = 'weekly'  # Default to daily if not specified
 
         end_date = datetime.datetime.now()
         start_date = None
@@ -387,7 +386,7 @@ api_trips.add_resource(TripIncomeByAsset, '/income/<org_id>/<user_id>/<asset_id>
 api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripExpenseByAsset, '/expense/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripReport, '/reports/<org_id>/')
-api_trips.add_resource(ExportTripReport, '/reports/export/')
+api_trips.add_resource(internal_customer_metrics, '/reports/internal_customer_metrics/')
 
 
 
