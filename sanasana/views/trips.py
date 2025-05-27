@@ -12,6 +12,8 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from dateutil.relativedelta import relativedelta
 import datetime
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
 # import pandas as pd
 
 
@@ -23,8 +25,7 @@ api_trips = Api(bp)
 class TripsByOrg(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
-        trips = [trips.as_dict() for trips in 
-                 qtrip.get_trip_by_org(org_id)]
+        trips = qtrip.get_trip_by_org(org_id)
         return jsonify(trips)
     
     def post(self, org_id, user_id):
@@ -64,9 +65,35 @@ class TripsByOrg(Resource):
 class TripsByAsset(Resource):
     def get(self, org_id, user_id, asset_id):
         """ list all trips """
-        trips = models.Trip.query.filter_by(t_organization_id=org_id,
-                                            t_asset_id=asset_id).all()
-        trips_list = [trip.as_dict() for trip in trips]
+        # trips = models.Trip.query.filter_by(t_organization_id=org_id,
+        #                                     t_asset_id=asset_id).all()
+        TripIncomeAlias = aliased(models.TripIncome)
+        TripExpenseAlias = aliased(models.TripExpense)
+
+        trips = db.session.query(
+            models.Trip,
+            func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
+            func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
+        ).outerjoin(
+            TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
+        ).outerjoin(
+            TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+        ).filter(models.Trip.t_organization_id==org_id,models.Trip.t_asset_id==asset_id
+        ).group_by(
+            models.Trip.id
+        ).order_by(
+            models.Trip.t_created_at.desc()
+        ).all()
+
+        # Clean __dict__ to remove non-serializable attributes
+        trips_list = [
+            {
+                **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
+                "t_income": t_income,
+                "t_expense": t_expense
+            }
+            for trip, t_income, t_expense in trips
+        ]
         return jsonify(trips_list)
 
 
@@ -103,7 +130,7 @@ class TripById(Resource):
         if trip_id is None:
             return abort(404)
         trip = qtrip.get_trip_by_id(trip_id)    
-        return jsonify(trip.as_dict())
+        return jsonify(trip)
     
     def post(self, org_id, user_id, trip_id):
         request_data = request.json
