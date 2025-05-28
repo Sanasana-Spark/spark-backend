@@ -68,8 +68,18 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
     
+    # def as_dict(self):
+    #     return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+    
     def as_dict(self):
-        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            if isinstance(value, datetime):
+                result[column.name] = value.isoformat()
+            else:
+                result[column.name] = value
+        return result
 
 
 class Asset(db.Model):
@@ -258,15 +268,21 @@ class Trip(db.Model):
     #     return {column.name: getattr(self, column.name) for column in self.__table__.columns}
     
     def as_dict(self):
-        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
-        result['o_name'] = self.operator.o_name if self.operator else None
-        result['o_email'] = self.operator.o_email if self.operator else None
-        result['user_id'] = self.operator.user.id if self.operator and self.operator.user else None
-        result['a_make'] = self.asset.a_make if self.asset else None
-        result['a_model'] = self.asset.a_model if self.asset else None
-        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
-        result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
-        result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            if isinstance(value, datetime):
+                result[column.name] = value.isoformat()
+            else:
+                result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+                result['o_name'] = self.operator.o_name if self.operator else None
+                result['o_email'] = self.operator.o_email if self.operator else None
+                result['user_id'] = self.operator.user.id if self.operator and self.operator.user else None
+                result['a_make'] = self.asset.a_make if self.asset else None
+                result['a_model'] = self.asset.a_model if self.asset else None
+                result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+                result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
+                result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
         return result
 
 
