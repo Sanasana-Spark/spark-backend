@@ -46,14 +46,14 @@ def get_trip_by_id(trip_id):
 def get_trip_by_org(org_id):  
     return models.Trip.query.filter_by(
         t_organization_id=org_id
-        ).order_by(models.Trip.t_created_at.desc()).all()
+        ).order_by(models.Trip.id.desc()).all()
 
 
 def get_trip_by_user(org_id, user_id):  
     return models.Trip.query.filter_by(
         t_organization_id=org_id,
         t_operator_id=user_id
-        ).all()
+        ).order_by(models.Trip.id.desc()).all()
 
 
 def get_trip_by_status(org_id, t_status):
