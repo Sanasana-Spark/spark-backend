@@ -10,7 +10,8 @@ def get_operator_by_id(org_id, id):
 
 
 def get_operator_by_org(org_id):
-    act = Operator.query.filter_by(o_organisation_id=org_id).all()
+    act = Operator.query.filter_by(o_organisation_id=org_id).order_by(
+        models.Operator.id.desc()).all()
     return act
 
 
