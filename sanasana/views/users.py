@@ -18,7 +18,7 @@ api_users = Api(bp)
 
 class AllOrg(Resource):
     def get(self):
-        Organizations = Organization.query.all()
+        Organizations = Organization.query.order_by(Organizations.id.desc()).all()
         Organizations_list = [Organization.as_dict() for Organization in Organizations]
         return jsonify(Organizations_list)
     

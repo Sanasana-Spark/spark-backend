@@ -14,7 +14,7 @@ def get_asset_by_id(org_id, id):
 def get_asset_by_org(org_id):
     act = Asset.query.filter_by(
         a_organisation_id=org_id
-    ).all()
+    ).order_by(models.Asset.id.desc()).all()
     return act
 
 
