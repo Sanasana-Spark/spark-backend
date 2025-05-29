@@ -8,7 +8,7 @@ def get_user_by_id(org_id, id):
 
 
 def get_users_by_org(org_id):
-    return User.query.filter_by(organization_id=org_id).all()
+    return User.query.filter_by(organization_id=org_id).order_by(models.User.default_id.desc()).all()
 
 
 def add_user(data):
