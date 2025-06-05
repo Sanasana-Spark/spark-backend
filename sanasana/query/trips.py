@@ -69,7 +69,6 @@ def get_trip_by_id(trip_id):
     }
 
 
-
 def get_trip_by_org(org_id):
     TripIncomeAlias = aliased(models.TripIncome)
     TripExpenseAlias = aliased(models.TripExpense)
@@ -96,12 +95,6 @@ def get_trip_by_org(org_id):
         trips.append(trip)
         
     return trips
-
-def get_trip_by_org(org_id):  
-    return models.Trip.query.filter_by(
-        t_organization_id=org_id
-        ).order_by(models.Trip.id.desc()).all()
-
 
 
 def get_trip_by_user(org_id, user_id):  
