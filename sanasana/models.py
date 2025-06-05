@@ -21,7 +21,7 @@ class Organization(db.Model):
     org_diesel_price = db.Column(db.Float, nullable=True, default=0)
     org_petrol_price = db.Column(db.Float, nullable=True, default=0)
     org_created_at = db.Column(db.DateTime, nullable=False, default=func.now())
-    org_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=False)
+    org_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
     org_status = db.Column(db.String, nullable=True, default="Active")
     org_logo = db.Column(db.String(200), nullable=True)
 
@@ -57,7 +57,7 @@ class User(db.Model):
     created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
     image = db.Column(db.String(200), nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=True)
     is_superuser = db.Column(db.Boolean, default=False, nullable=True)
     is_verified = db.Column(db.Boolean, default=False, nullable=True)
     is_deleted = db.Column(db.Boolean, default=False, nullable=True)
@@ -500,3 +500,27 @@ class TripExpense(db.Model):
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
         result['t_status'] = self.trip.t_status if self.trip else None
         return result
+    
+    
+class Maintenance(db.Model):
+    __tablename__ = 'maintenance'
+    __table_args__ = {'schema': 'assets'}
+
+    id = db.Column(db.Integer, primary_key=True)
+    m_created = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    m_created_by = db.Column(db.String, nullable=False)
+    m_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=False)
+    m_type = db.Column(db.String, nullable=False)  # Expected: 'preventative', 'corrective', or 'planned'
+    m_description = db.Column(db.String, nullable=True)
+    m_date = db.Column(db.Date, nullable=True)
+    m_total_cost = db.Column(db.Float, nullable=True)
+    m_insurance_coverage = db.Column(db.String, nullable=True)  # 'fully', 'partially', or 'No'
+    m_status = db.Column(db.String, nullable=True)
+
+    asset = db.relationship('Asset', backref='maintenances')
+
+    def __repr__(self):
+        return f'<Maintenance {self.id}>'
+
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
