@@ -20,7 +20,7 @@ class ClientsByOrg(Resource):
         """ list all clients """
         clients = models.Client.query.filter_by(
             c_organization_id=org_id
-        ).all()
+        ).order_by(models.Client.id.desc()).all()
         clients = [client.as_dict() for client in clients]
         return jsonify(clients=clients)
     
@@ -84,10 +84,10 @@ class ClientById(Resource):
 
 class Invoices(Resource):
     def get(self, org_id, user_id):
-        """ list all clients """
+        """ list all clients invoice """
         invoices = models.TripIncome.query.filter_by(
             ti_organization_id=org_id
-        ).all()
+        ).order_by(models.TripIncome.id.desc()).all()
         invoices = [invoice.as_dict() for invoice in invoices]
         return jsonify(invoices=invoices)
      
@@ -102,7 +102,7 @@ class InvoicesByClientId(Resource):
                 models.TripIncome.ti_client_id == client_id,
                 models.TripIncome.ti_status != "deleted"
             )
-        ).all()
+        ).order_by(models.TripIncome.id.desc()).all()
         invoices = [invoice.as_dict() for invoice in invoices]
         return jsonify(invoices=invoices)
     
