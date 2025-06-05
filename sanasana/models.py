@@ -274,15 +274,18 @@ class Trip(db.Model):
             if isinstance(value, datetime):
                 result[column.name] = value.isoformat()
             else:
-                result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
-                result['o_name'] = self.operator.o_name if self.operator else None
-                result['o_email'] = self.operator.o_email if self.operator else None
-                result['user_id'] = self.operator.user.id if self.operator and self.operator.user else None
-                result['a_make'] = self.asset.a_make if self.asset else None
-                result['a_model'] = self.asset.a_model if self.asset else None
-                result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
-                result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
-                result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
+                result[column.name] = value
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['o_name'] = self.operator.o_name if self.operator else None
+        result['o_email'] = self.operator.o_email if self.operator else None
+        result['user_id'] = self.operator.user.id if self.operator and self.operator.user else None
+        result['a_make'] = self.asset.a_make if self.asset else None
+        result['a_model'] = self.asset.a_model if self.asset else None
+        result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
+        result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
+        result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
+        result['t_income'] = getattr(self, 't_income', 0.0)
+        result['t_expense'] = getattr(self, 't_expense', 0.0)
         return result
 
 

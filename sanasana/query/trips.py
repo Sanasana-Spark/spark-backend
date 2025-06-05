@@ -57,16 +57,11 @@ def get_trip_by_id(trip_id):
         models.Trip.id
     ).first()
 
-    if result is None:
-        return None  # Or raise an error if preferred
-
-    trip, t_income, t_expense = result
-
-    return {
-        **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
-        "t_income": t_income,
-        "t_expense": t_expense
-    }
+    if result:
+        trip, t_income, t_expense = result
+        trip.t_income = t_income
+        trip.t_expense = t_expense
+        return trip
 
 
 def get_trip_by_org(org_id):
@@ -93,7 +88,6 @@ def get_trip_by_org(org_id):
         trip.t_income = t_income
         trip.t_expense = t_expense
         trips.append(trip)
-        
     return trips
 
 

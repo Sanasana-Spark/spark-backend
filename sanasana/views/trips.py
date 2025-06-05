@@ -127,7 +127,7 @@ class TripById(Resource):
         """ get trip by id """
         if trip_id is None:
             return abort(404)
-        trip = qtrip.get_trip_by_id(trip_id)    
+        trip = qtrip.get_trip_by_id(trip_id).as_dict()    
         return jsonify(trip)
     
     def post(self, org_id, user_id, trip_id):
