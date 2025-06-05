@@ -3,6 +3,7 @@ from sanasana import models
 from datetime import datetime
 from sqlalchemy import func, cast, Float
 from sanasana.models import Organization, User, Operator, Trip
+from sqlalchemy.orm import aliased
 
 
 def get_all_trips():
@@ -39,14 +40,73 @@ def add_trip(data):
 
 
 def get_trip_by_id(trip_id):
-    return models.Trip.query.filter_by(
-        id=trip_id).first()
+    TripIncomeAlias = aliased(models.TripIncome)
+    TripExpenseAlias = aliased(models.TripExpense)
+
+    result = db.session.query(
+        models.Trip,
+        func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
+        func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
+    ).outerjoin(
+        TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
+    ).outerjoin(
+        TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+    ).filter(
+        models.Trip.id == trip_id
+    ).group_by(
+        models.Trip.id
+    ).first()
+
+    if result is None:
+        return None  # Or raise an error if preferred
+
+    trip, t_income, t_expense = result
+
+    return {
+        **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
+        "t_income": t_income,
+        "t_expense": t_expense
+    }
+
+
+
+def get_trip_by_org(org_id):
+    TripIncomeAlias = aliased(models.TripIncome)
+    TripExpenseAlias = aliased(models.TripExpense)
+
+    trips = db.session.query(
+        models.Trip,
+        func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
+        func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
+    ).outerjoin(
+        TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
+    ).outerjoin(
+        TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+    ).filter(
+        models.Trip.t_organization_id == org_id
+    ).group_by(
+        models.Trip.id
+    ).order_by(
+        models.Trip.t_created_at.desc()
+    ).all()
+
+    # Clean __dict__ to remove non-serializable attributes
+    return [
+        {
+            **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
+            "t_income": t_income,
+            "t_expense": t_expense
+        }
+        for trip, t_income, t_expense in trips
+    ]
+
 
 
 def get_trip_by_org(org_id):  
     return models.Trip.query.filter_by(
         t_organization_id=org_id
         ).order_by(models.Trip.id.desc()).all()
+
 
 
 def get_trip_by_user(org_id, user_id):  
