@@ -25,7 +25,7 @@ api_trips = Api(bp)
 class TripsByOrg(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
-        trips = qtrip.get_trip_by_org(org_id)
+        trips = [trip.as_dict() for trip in qtrip.get_trip_by_org(org_id)]
         return jsonify(trips)
     
     def post(self, org_id, user_id):
@@ -70,7 +70,7 @@ class TripsByAsset(Resource):
         TripIncomeAlias = aliased(models.TripIncome)
         TripExpenseAlias = aliased(models.TripExpense)
 
-        trips = db.session.query(
+        trips_data = db.session.query(
             models.Trip,
             func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
             func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
@@ -86,14 +86,12 @@ class TripsByAsset(Resource):
         ).all()
 
         # Clean __dict__ to remove non-serializable attributes
-        trips_list = [
-            {
-                **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
-                "t_income": t_income,
-                "t_expense": t_expense
-            }
-            for trip, t_income, t_expense in trips
-        ]
+        trips = []
+        for trip, t_income, t_expense in trips_data:
+            trip.t_income = t_income
+            trip.t_expense = t_expense
+            trips.append(trip)
+        trips_list = [trip.as_dict() for trip in trips]
         return jsonify(trips_list)
 
 

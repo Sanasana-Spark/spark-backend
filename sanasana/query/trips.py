@@ -74,7 +74,7 @@ def get_trip_by_org(org_id):
     TripIncomeAlias = aliased(models.TripIncome)
     TripExpenseAlias = aliased(models.TripExpense)
 
-    trips = db.session.query(
+    trips_data = db.session.query(
         models.Trip,
         func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
         func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
@@ -89,18 +89,13 @@ def get_trip_by_org(org_id):
     ).order_by(
         models.Trip.t_created_at.desc()
     ).all()
-
-    # Clean __dict__ to remove non-serializable attributes
-    return [
-        {
-            **{k: v for k, v in trip.__dict__.items() if not k.startswith("_")},
-            "t_income": t_income,
-            "t_expense": t_expense
-        }
-        for trip, t_income, t_expense in trips
-    ]
-
-
+    trips = []
+    for trip, t_income, t_expense in trips_data:
+        trip.t_income = t_income
+        trip.t_expense = t_expense
+        trips.append(trip)
+        
+    return trips
 
 def get_trip_by_org(org_id):  
     return models.Trip.query.filter_by(
