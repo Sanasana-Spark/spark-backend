@@ -27,11 +27,11 @@ class AllFuelRequest(Resource):
 class FuelRequest(Resource):
     def post(self, org_id, user_id, trip_id):
         data = request.get_json()
-        trip = qtrip.get_trip_by_id(trip_id)
+        trip = qtrip.get_trip_by_id(trip_id).as_dict()
 
-        f_cost = get_fuel_price(trip.asset.a_fuel_type)
+        f_cost = get_fuel_price(trip['a_fuel_type'])
         if f_cost is None:
-            return jsonify({"error": f"Fuel price not found for type: {f_type}"}), 400
+            return jsonify({"error": f"Fuel price not found for type: {trip['a_fuel_type']}"}), 400
         # f_litres = calculate_f_litres(trip.t_distance, f_efficiency_rate, f_load)
         f_litres = 0
         f_total_cost = f_litres * f_cost
@@ -40,13 +40,13 @@ class FuelRequest(Resource):
             "f_created_by": user_id, 
             "f_organization_id": org_id,
             "f_trip_id": trip_id,
-            "f_asset_id": trip.t_asset_id,
-            "f_operator_id": trip.t_operator_id,
+            "f_asset_id": trip['t_asset_id'],
+            "f_operator_id": trip['t_operator_id'],
             "f_litres": f_litres,
             "f_cost": f_cost,
             "f_total_cost": f_total_cost,
-            "f_distance": trip.t_distance,
-            "f_type": trip.asset.a_fuel_type,
+            "f_distance": trip['t_distance'],
+            "f_type": trip['a_fuel_type'],
             "f_request_type": data["f_request_type"],
             }
         result = qfuel_request.add(request_data)
