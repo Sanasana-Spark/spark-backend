@@ -338,12 +338,28 @@ class TripExpense(Resource):
 
 class TripExpenseByAsset(Resource):
     def get(self, org_id, user_id, asset_id):
-        expense = models.TripIncome.query.filter_by(
+        expense = models.TripExpense.query.filter_by(
             te_organization_id=org_id,
             te_asset_id=asset_id
         ).order_by(models.TripExpense.id.desc()).all()
         expense_list = [expense.as_dict() for expense in expense]
         return jsonify(expense_list)
+    
+    def post(self, org_id, user_id, asset_id):
+        """ Add trip income by asset """
+        request_data = request.get_json()
+        data = {
+            "te_created_by": user_id,
+            "te_organization_id": org_id,
+            "te_asset_id": asset_id,
+            "te_operator_id": request_data["te_operator_id"],
+            "te_type": request_data["te_type"],
+            "te_description": request_data["te_description"],
+            "te_amount": request_data["te_amount"]
+        }
+        result = qtrip.add_trip_expense(data)
+        trip_expense = result.as_dict()
+        return jsonify(trip_expense=trip_expense)
 
 
 class TripReport(Resource):
