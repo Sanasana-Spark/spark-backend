@@ -22,23 +22,12 @@ class AllOperators(Resource):
         data = request.get_json()
         data = {k.strip().lower(): v for k, v in data.items()}
 
-        data = {
-            "o_assigned_asset": data["o_assigned_asset"],
-            "o_created_by": user_id,
-            "o_cum_mileage": data["o_cum_mileage"],
-            "o_email": data["o_email"],
-            "o_expirence": data["o_expirence"],
-            "o_lincense_expiry": data["o_lincense_expiry"],
-            "o_lincense_id": data["o_lincense_id"],
-            "o_lincense_type": data["o_lincense_type"],
-            "o_name": data["o_name"],
-            "o_national_id": data["o_national_id"],
-            "o_organisation_id": org_id,
-            "o_phone": data["o_phone"],
-            "o_role": data["o_role"],
-            "o_status": data["o_status"],
-        }
+        data["o_organisation_id"] = org_id
+        data["o_created_by"] = user_id
+
+
         result = qoperator.add_operator(data)
+
         operator = result.as_dict()
         userdata = {
             "organization_id": org_id,

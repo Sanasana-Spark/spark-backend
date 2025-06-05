@@ -10,30 +10,39 @@ def get_operator_by_id(org_id, id):
 
 
 def get_operator_by_org(org_id):
-    act = Operator.query.filter_by(o_organisation_id=org_id).all()
+    act = Operator.query.filter_by(o_organisation_id=org_id).order_by(
+        models.Operator.id.desc()).all()
     return act
 
 
 def add_operator(data):
     operator = Operator()
-    operator.o_assigned_asset = data["o_assigned_asset"]
-    operator.o_created_by = data["o_created_by"]
-    operator.o_cum_mileage = data["o_cum_mileage"]
-    operator.o_email = data["o_email"]
-    operator.o_expirence = data["o_expirence"]
-    operator.o_lincense_expiry = data["o_lincense_expiry"]
-    operator.o_lincense_id = data["o_lincense_id"]
-    operator.o_lincense_type = data["o_lincense_type"]
-    operator.o_name = data["o_name"]
-    operator.o_national_id = data["o_national_id"]
-    operator.o_organisation_id = data["o_organisation_id"]
-    operator.o_phone = data["o_phone"]
-    operator.o_role = data["o_role"]
-    operator.o_status = data["o_status"]
 
+    for key, value in data.items():
+        if hasattr(operator, key) and key != "id":
+            setattr(operator, key, value)
     db.session.add(operator)
     db.session.commit()
     return operator
+
+
+
+    # operator.o_assigned_asset = data["o_assigned_asset"]
+    # operator.o_created_by = data["o_created_by"]
+    # operator.o_cum_mileage = data["o_cum_mileage"]
+    # operator.o_email = data["o_email"]
+    # operator.o_expirence = data["o_expirence"]
+    # operator.o_lincense_expiry = data["o_lincense_expiry"]
+    # operator.o_lincense_id = data["o_lincense_id"]
+    # operator.o_lincense_type = data["o_lincense_type"]
+    # operator.o_name = data["o_name"]
+    # operator.o_national_id = data["o_national_id"]
+    # operator.o_organisation_id = data["o_organisation_id"]
+    # operator.o_phone = data["o_phone"]
+    # operator.o_role = data["o_role"]
+    # operator.o_status = data["o_status"]
+
+
 
 
 def delete_operator(operator_id):
