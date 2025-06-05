@@ -290,6 +290,23 @@ class TripIncomeByAsset(Resource):
         ).order_by(models.TripIncome.id.desc()).all()
         income_list = [income.as_dict() for income in income]
         return jsonify(income_list)
+    
+    def post(self, org_id, user_id, asset_id):
+        """ Add trip income by asset """
+        request_data = request.get_json()
+        data = {
+            "ti_created_by": user_id,
+            "ti_organization_id": org_id,
+            "ti_asset_id": asset_id,
+            "ti_operator_id": request_data["ti_operator_id"],
+            "ti_client_id": request_data["ti_client_id"],
+            "ti_type": request_data["ti_type"],
+            "ti_description": request_data["ti_description"],
+            "ti_amount": request_data["ti_amount"]
+        }
+        result = qtrip.add_trip_income(data)
+        trip_income = result.as_dict()
+        return jsonify(trip_income=trip_income)
 
 
 class TripExpense(Resource):

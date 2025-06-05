@@ -171,16 +171,11 @@ def add_odometer_reading(data):
 
 def add_trip_income(data):
     trip_income = models.TripIncome()
-    trip_income.ti_created_by = data["ti_created_by"]
-    trip_income.ti_organization_id = data["ti_organization_id"]
-    trip_income.ti_trip_id = data["ti_trip_id"]
-    trip_income.ti_operator_id = data["ti_operator_id"]
-    trip_income.ti_asset_id = data["ti_asset_id"]
-    trip_income.ti_client_id = data["ti_client_id"]
-    trip_income.ti_type = data["ti_type"]
-    trip_income.ti_amount = data["ti_amount"]
-    trip_income.ti_description = data["ti_description"]
-
+    for key, value in data.items():
+        if not hasattr(trip_income, key):
+            raise ValueError(f"Invalid attribute '{key}' for TripExpense model")
+        setattr(trip_income, key, value)
+    
     db.session.add(trip_income)
     db.session.commit()
     return trip_income
@@ -188,14 +183,11 @@ def add_trip_income(data):
 
 def add_trip_expense(data):
     trip_expense = models.TripExpense()
-    trip_expense.te_created_by = data["te_created_by"]
-    trip_expense.te_organization_id = data["te_organization_id"]
-    trip_expense.te_trip_id = data["te_trip_id"]
-    trip_expense.te_operator_id = data["te_operator_id"]
-    trip_expense.te_asset_id = data["te_asset_id"]
-    trip_expense.te_type = data["te_type"]
-    trip_expense.te_amount = data["te_amount"]
-    trip_expense.te_description = data["te_description"]
+
+    for key, value in data.items():
+        if not hasattr(trip_expense, key):
+            raise ValueError(f"Invalid attribute '{key}' for TripExpense model")
+        setattr(trip_expense, key, value)
 
     db.session.add(trip_expense)
     db.session.commit()
