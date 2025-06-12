@@ -228,6 +228,7 @@ class Trip(db.Model):
     t_end_date = db.Column(db.DateTime, nullable=True)
     t_operator_id = db.Column(db.Integer, db.ForeignKey('assets.operators.id'), nullable=True)
     t_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=True)
+    t_client_id = db.Column(db.Integer, db.ForeignKey('assets.clients.id'), nullable=True)
     t_status = db.Column(db.String, default='PENDING', nullable=False,)
     t_load = db.Column(db.Float, nullable=True)
     t_est_fuel = db.Column(db.Float, nullable=True)
@@ -509,6 +510,7 @@ class Maintenance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     m_created = db.Column(db.DateTime, nullable=False, server_default=func.now())
     m_created_by = db.Column(db.String, nullable=False)
+    m_organisation_id = db.Column(db.String, db.ForeignKey('users.organization.id'), nullable=False)
     m_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=False)
     m_type = db.Column(db.String, nullable=False)  # Expected: 'preventative', 'corrective', or 'planned'
     m_description = db.Column(db.String, nullable=True)
