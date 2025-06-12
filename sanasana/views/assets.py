@@ -2,14 +2,15 @@ from flask import (
     Blueprint,  jsonify, request
 )
 from flask_restful import Api, Resource
-from sqlalchemy import func, and_, cast, Numeric
+from sqlalchemy import func, and_, cast, Numeric, Float
 from werkzeug.utils import secure_filename
 from dateutil.relativedelta import relativedelta
 import os
 import datetime
+from datetime import datetime
 from .. import db
 from sanasana.query import assets as qasset
-from sanasana.models import Status, Asset, Trip
+from sanasana.models import Status, Asset, Trip,  TripIncome, TripExpense
 from sanasana import models
 
 bp = Blueprint('assets', __name__, url_prefix='/assets')
@@ -105,11 +106,50 @@ class AssetStatus(Resource):
 
 class FleetPerformance(Resource):
     def get(self, org_id):
-         # Get query parameters for date filtering
+        # Get query parameters for date filtering
         start_date = request.args.get("start_date")  # Format: 'YYYY-MM-DD'
         end_date = request.args.get("end_date")  # Format: 'YYYY-MM-DD'
 
-        assets = (
+        # Convert dates if they exist
+        if start_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+        # TripIncome subquery
+        income_subq = db.session.query(
+            TripIncome.ti_asset_id.label("asset_id"),
+            func.coalesce(func.sum(cast(TripIncome.ti_amount, Float)), 0).label("total_revenue")
+        ).group_by(TripIncome.ti_asset_id)
+
+        if start_date and end_date:
+            income_subq = income_subq.filter(
+                and_(
+                    TripIncome.ti_created_at >= start_date,
+                    TripIncome.ti_created_at <= end_date
+                )
+            )
+
+        income_subq = income_subq.subquery()
+
+        # TripExpense subquery
+        expense_subq = db.session.query(
+            TripExpense.te_asset_id.label("asset_id"),
+            func.coalesce(func.sum(cast(TripExpense.te_amount, Float)), 0).label("total_expense")
+        ).group_by(TripExpense.te_asset_id)
+
+        if start_date and end_date:
+            expense_subq = expense_subq.filter(
+                and_(
+                    TripExpense.te_created_at >= start_date,
+                    TripExpense.te_created_at <= end_date
+                )
+            )
+
+        expense_subq = expense_subq.subquery()
+
+        # Main asset + trip query
+        query = (
             db.session.query(
                 Asset.id.label("id"),
                 Asset.a_license_plate.label("a_license_plate"),
@@ -119,30 +159,42 @@ class FleetPerformance(Resource):
                 Asset.a_efficiency_rate.label("a_efficiency_rate"),
                 func.count(Trip.id).label("trip_count"),
                 func.sum(
-                    cast(
-                        func.regexp_replace(Trip.t_distance, '[^0-9.]', '', 'g'),  # Remove non-numeric characters
-                        Numeric
-                    )).label("total_miles"),  # Cast t_distance to Numeric
+                    cast(func.regexp_replace(Trip.t_distance, '[^0-9.]', '', 'g'), Numeric)
+                ).label("total_miles"),
                 func.sum(Trip.t_actual_fuel).label("total_fuel"),
                 func.sum(Trip.t_actual_cost).label("total_cost"),
-
+                func.coalesce(income_subq.c.total_revenue, 0).label("total_revenue"),
+                func.coalesce(expense_subq.c.total_expense, 0).label("total_expense"),
             )
             .filter(Asset.a_organisation_id == org_id)
             .join(Trip, Asset.id == Trip.t_asset_id)
-            .group_by(Asset.id) 
+            .outerjoin(income_subq, income_subq.c.asset_id == Asset.id)
+            .outerjoin(expense_subq, expense_subq.c.asset_id == Asset.id)
+            .group_by(
+                Asset.id,
+                Asset.a_license_plate,
+                Asset.a_make,
+                Asset.a_model,
+                Asset.a_year,
+                Asset.a_efficiency_rate,
+                income_subq.c.total_revenue,
+                expense_subq.c.total_expense
+            )
             .order_by(func.sum(cast(func.regexp_replace(Trip.t_distance, '[^0-9.]', '', 'g'), Numeric)).desc())
         )
-           # Apply date filtering if both start_date and end_date are provided
+
+        # Apply date filtering if both dates are provided
         if start_date and end_date:
-            query = assets.filter(
+            query = query.filter(
                 and_(
                     func.date(Trip.t_start_date) >= start_date,
-                    func.date(Trip.t_start_date) <= end_date,
+                    func.date(Trip.t_start_date) <= end_date
                 )
             )
 
         results = query.all()
-        # Convert query results to JSON
+
+        # Convert to JSON format
         fleet_data = [
             {
                 "id": row.id,
@@ -152,14 +204,17 @@ class FleetPerformance(Resource):
                 "a_year": row.a_year,
                 "a_efficiency_rate": row.a_efficiency_rate,
                 "trip_count": row.trip_count,
-                "total_miles": row.total_miles,
-                "total_fuel": row.total_fuel,
-                "total_cost": row.total_cost,
+                "total_miles": float(row.total_miles or 0),
+                "total_fuel": float(row.total_fuel or 0),
+                "total_cost": float(row.total_cost or 0),
+                "total_revenue": float(row.total_revenue or 0),
+                "total_expense": float(row.total_expense or 0),
+                "profit": float((row.total_revenue or 0) - (row.total_expense or 0))
             }
             for row in results
         ]
 
-        return jsonify(fleet_data=fleet_data)    
+        return jsonify(fleet_data=fleet_data)
 
 
 class AssetsReport(Resource):
