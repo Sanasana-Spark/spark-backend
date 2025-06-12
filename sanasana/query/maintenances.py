@@ -32,7 +32,7 @@ def get_maintenance_by_organization(org_id):
         .filter(Maintenance.asset.has(a_organisation_id=org_id))\
         .order_by(desc(Maintenance.id)).all()
 
-def get_maintenance_by_asset(asset_id):
+def get_maintenance_by_asset(org_id, asset_id):
     return Maintenance.query.filter_by(m_asset_id=asset_id)\
         .order_by(desc(Maintenance.id)).all()
 
