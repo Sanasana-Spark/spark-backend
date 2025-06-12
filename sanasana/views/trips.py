@@ -54,7 +54,8 @@ class TripsByOrg(Resource):
             "t_destination_place_query": request_data["t_destination_place_query"], 
             # "t_directionsResponse": request_data["t_directionsResponse"], ignore for now
             "t_distance": request_data["t_distance"] if "t_distance" in request_data else None,
-            "t_duration": request_data["t_duration"]
+            "t_duration": request_data["t_duration"],
+            "t_client_id": request_data.get("t_client_id", None)  # Optional field
         }
 
         result = qtrip.add_trip(data)

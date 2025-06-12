@@ -33,6 +33,7 @@ def add_trip(data):
     # trip.t_directionsResponse = data["t_directionsResponse"]
     trip.t_distance = data.get("t_distance")
     trip.t_duration = data["t_duration"]
+    trip.t_client_id = data['t_client_id']
 
     db.session.add(trip)
     db.session.commit()
