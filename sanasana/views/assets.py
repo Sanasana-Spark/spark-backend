@@ -20,7 +20,7 @@ api_assets = Api(bp)
 class Assets(Resource):
     def get(self, org_id, user_id):
         assets = [asset.as_dict() for asset in qasset.get_asset_by_org(org_id)]
-        return jsonify(assets)
+        return jsonify(assets=assets)
     
     def post(self, org_id, user_id):
         data = request.get_json()
