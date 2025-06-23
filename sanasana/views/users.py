@@ -18,25 +18,41 @@ api_users = Api(bp)
 
 class AllOrg(Resource):
     def get(self):
-        Organizations = Organization.query.order_by(Organizations.id.desc()).all()
-        Organizations_list = [Organization.as_dict() for Organization in Organizations]
+        Organizations = Organization.query.order_by(Organization.id.desc()).all()
+        Organizations_list = [Organization.as_dict() for
+                              Organization in Organizations]
         return jsonify(Organizations_list)
     
     def post(self):
+        """ set up organisation and organisation admin
+        """
         data = request.json
-        org_name = data.get('org_name')
-        org_country = data.get('org_country')
-        org_email = data.get('org_email')
-        id = data.get('id')
 
-        if not org_name:
-            return jsonify({'error': 'Organization name is required'}), 400
+        orgdata = {
+            "id": data.get('organization_id'),
+            "org_email": data.get('org_email'),
+            "org_name": data.get('org_name'),
+            "org_country": data.get('org_country'),
+            "org_currency": data.get('org_currency'),
+            "org_diesel_price": data.get('org_diesel_price'),
+            "org_petrol_price": data.get('org_petrol_price')
+        }
+        org = qusers.setup_org(orgdata)
 
-        new_org = Organization(org_name=org_name, org_country=org_country, org_email=org_email, id=id)
-        db.session.add(new_org)
-        db.session.commit()
-
-        return jsonify(new_org.as_dict())
+        userdata = {
+            "id": data.get('user_id'),
+            "organization_id": data.get('organization_id'),
+            "username": data.get('username'),
+            "name": data.get('username'),
+            "status": "Active",
+            "email": data.get('email'),
+            "is_organization_admin": data.get('is_organization_admin'),
+            "role": data.get('role'),
+            
+        }
+        user = qusers.setup_user(userdata)
+    
+        return jsonify(org.as_dict())
 
 
 class EditOrg(Resource):

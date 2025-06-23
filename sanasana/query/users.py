@@ -12,6 +12,7 @@ def get_users_by_org(org_id):
 
 
 def add_user(data):
+
     user = models.User()
     user.organization_id = data["organization_id"]
     user.email = data["email"]
@@ -21,6 +22,24 @@ def add_user(data):
     user.name = data["name"]
     user.username = data["username"]
 
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+def setup_org(data):
+    org = models.Organization()
+    for attr in data:
+        setattr(org, attr, data[attr])  # Set attributes dynamically
+    db.session.add(org)
+    db.session.commit()
+    return org
+
+
+def setup_user(data):
+    user = models.User()
+    for attr in data:
+        setattr(user, attr, data[attr])
     db.session.add(user)
     db.session.commit()
     return user
