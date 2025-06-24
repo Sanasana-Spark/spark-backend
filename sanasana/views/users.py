@@ -4,6 +4,7 @@ from flask import (
 from flask_mail import Message
 from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
+import requests
 import os
 from sanasana import db, mail
 from sanasana.models import User, Organization
@@ -156,23 +157,24 @@ class UsersByOrg(Resource):
             }
         result = qusers.add_user(data)
         user = result.as_dict()
+
+        response = requests.post(
+            f"https://api.clerk.com/v1/organizations/{org_id}/invitations", 
+            headers={
+                "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}",
+                "Content-Type": "application/json"
+            },
+
+         
+            json={
+                "email_address": data["email"],
+                "role": data["role"],
+                "inviter_user_id": admin_id,
+                "expires_in_days": 30
+            }
+        )
+        print('>>>>>', response.json())
         return jsonify(user=user)
-
-
-
-        email = data.get('email')
-        username = data.get('username')
-        role = data.get('role')
-        phone = data.get('phone')
-        status = "active"
-        organization_id = org_id
-        user = User(email=email, username=username, name=username, role=role,
-                    phone=phone, organization_id=organization_id,
-                    status=status)
-
-        db.session.add(user)
-        db.session.commit()
-        return jsonify(user.as_dict())
 
 
 class UserById(Resource):

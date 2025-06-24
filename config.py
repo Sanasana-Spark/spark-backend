@@ -3,6 +3,7 @@ import os
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    CLERK_SECRET_KEY = os.environ.get('CLERK_SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     include_schemas = True
     INCLUDE_SCHEMAS = True
