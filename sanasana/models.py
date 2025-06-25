@@ -515,12 +515,14 @@ class Maintenance(db.Model):
     m_created_by = db.Column(db.String, nullable=False)
     m_organisation_id = db.Column(db.String, db.ForeignKey('users.organization.id'), nullable=False)
     m_asset_id = db.Column(db.Integer, db.ForeignKey('assets.assets.id'), nullable=False)
-    m_type = db.Column(db.String, nullable=False)  # Expected: 'preventative', 'corrective', or 'planned'
+    m_type = db.Column(db.String, nullable=False)  # 'preventative', 'corrective', or 'planned'
     m_description = db.Column(db.String, nullable=True)
     m_date = db.Column(db.Date, nullable=True)
     m_total_cost = db.Column(db.Float, nullable=True)
     m_insurance_coverage = db.Column(db.String, nullable=True)  # 'fully', 'partially', or 'No'
     m_status = db.Column(db.String, nullable=True)
+    m_estimated_cost = db.Column(db.String, nullable=True)
+    m_attachment = db.Column(db.String, nullable=True)
 
     asset = db.relationship('Asset', backref='maintenances')
 
@@ -528,4 +530,6 @@ class Maintenance(db.Model):
         return f'<Maintenance {self.id}>'
 
     def as_dict(self):
-        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
+        result['m_asset_license'] = self.asset.a_license_plate if self.asset else None
+        return result
