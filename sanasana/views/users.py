@@ -10,6 +10,7 @@ from sanasana import db, mail
 from sanasana.models import User, Organization
 from sanasana.query import users as qusers
 from sanasana.query import send_email as qsend_email
+from sanasana.query import resources as qresources
 import logging
 
 
@@ -84,6 +85,11 @@ class EditOrg(Resource):
             org.org_diesel_price = request_data['org_diesel_price']
         if 'org_petrol_price' in request_data:
             org.org_petrol_price = request_data['org_petrol_price']
+        if 'org_lang' in request_data:
+            org.org_lang = request_data['org_lang']
+        if 'org_logo_url' in request_data:
+            org_logo = request_data['org_logo']
+            org.org_logo = qresources.save_logo(org_logo, org_id)
         db.session.commit()
 
         return jsonify({'message': 'Organization updated successfully'})

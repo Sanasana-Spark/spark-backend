@@ -24,6 +24,7 @@ class Organization(db.Model):
     org_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
     org_status = db.Column(db.String, nullable=True, default="Active")
     org_logo = db.Column(db.String(200), nullable=True)
+    org_lang = db.Column(db.String(20), nullable=True, default='en')
 
     def __repr__(self):
         return f'<Organization {self.org_name}>'
