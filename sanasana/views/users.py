@@ -31,13 +31,12 @@ class AllOrg(Resource):
         data = request.json
 
         orgdata = {
-            "id": data.get('organization_id'),
+            "id": data.get('org_id'),
             "org_email": data.get('org_email'),
             "org_name": data.get('org_name'),
             "org_country": data.get('org_country'),
             "org_currency": data.get('org_currency'),
-            "org_diesel_price": data.get('org_diesel_price'),
-            "org_petrol_price": data.get('org_petrol_price')
+            "org_created_by": data.get('org_created_by'),
         }
         org = qusers.setup_org(orgdata)
 
@@ -87,6 +86,8 @@ class EditOrg(Resource):
             org.org_petrol_price = request_data['org_petrol_price']
         if 'org_lang' in request_data:
             org.org_lang = request_data['org_lang']
+        if 'org_phone' in request_data:
+            org.org_phone = request_data['org_phone']
         if 'org_logo_url' in request_data:
             org_logo = request_data['org_logo']
             org.org_logo = qresources.save_logo(org_logo, org_id)

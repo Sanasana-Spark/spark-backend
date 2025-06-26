@@ -25,6 +25,7 @@ class Organization(db.Model):
     org_status = db.Column(db.String, nullable=True, default="Active")
     org_logo = db.Column(db.String(200), nullable=True)
     org_lang = db.Column(db.String(20), nullable=True, default='en')
+    org_phone = db.Column(db.String(20), nullable=True)
 
     def __repr__(self):
         return f'<Organization {self.org_name}>'
