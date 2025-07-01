@@ -21,7 +21,7 @@ class Organization(db.Model):
     org_diesel_price = db.Column(db.Float, nullable=True, default=0)
     org_petrol_price = db.Column(db.Float, nullable=True, default=0)
     org_created_at = db.Column(db.DateTime, nullable=False, default=func.now())
-    org_created_by = db.Column(db.String, db.ForeignKey('users.users.id'), nullable=True)
+    org_created_by = db.Column(db.String, nullable=True)
     org_status = db.Column(db.String, nullable=True, default="Active")
     org_logo = db.Column(db.String(200), nullable=True)
     org_lang = db.Column(db.String(20), nullable=True, default='en')
