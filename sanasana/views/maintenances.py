@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_restful import Api, Resource
 from sanasana.query import maintenances as qmaintenance
+from sanasana.models import Maintenance
 
 bp = Blueprint('maintenances', __name__, url_prefix='/maintenances/')
 api_maintenance = Api(bp)
@@ -13,12 +14,22 @@ class MaintenanceByOrganization(Resource):
         return jsonify(maintenance_list=maintenance_list)
 
     def post(self, org_id, user_id):
-        data = request.form.to_dict()
+        data = request.get_json()
         data = {k.strip().lower(): v for k, v in data.items()}
-        data["m_created_by"] = user_id
-        data["m_organisation_id"]=org_id
-        file = request.files.get('m_attachment')  # optional
-        result = qmaintenance.add_maintenance(data, file=file)
+        maintenance = Maintenance(
+            m_created_by= user_id,
+            m_organisation_id=org_id,
+            m_asset_id=data.get('m_asset_id'),
+            m_type=data.get('m_type'),
+            m_description=data.get('m_description'),
+            m_date=data.get('m_date'),
+            m_total_cost=data.get('m_total_cost'),
+            m_insurance_coverage=data.get('m_insurance_coverage'),
+            m_status=data.get('m_status'),
+            m_estimated_cost=data.get('m_estimated_cost'),
+        )
+        file = data.get('m_attachment')
+        result = qmaintenance.add_maintenance(maintenance, file=file)
         return jsonify(maintenance=result.as_dict())
 
 
