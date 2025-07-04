@@ -4,11 +4,13 @@ from flask import (
 from flask_mail import Message
 from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
+import requests
 import os
 from sanasana import db, mail
 from sanasana.models import User, Organization
 from sanasana.query import users as qusers
 from sanasana.query import send_email as qsend_email
+from sanasana.query import resources as qresources
 import logging
 
 
@@ -18,25 +20,40 @@ api_users = Api(bp)
 
 class AllOrg(Resource):
     def get(self):
-        Organizations = Organization.query.order_by(Organizations.id.desc()).all()
-        Organizations_list = [Organization.as_dict() for Organization in Organizations]
+        Organizations = Organization.query.order_by(Organization.id.desc()).all()
+        Organizations_list = [Organization.as_dict() for
+                              Organization in Organizations]
         return jsonify(Organizations_list)
     
     def post(self):
+        """ set up organisation and organisation admin
+        """
         data = request.json
-        org_name = data.get('org_name')
-        org_country = data.get('org_country')
-        org_email = data.get('org_email')
-        id = data.get('id')
 
-        if not org_name:
-            return jsonify({'error': 'Organization name is required'}), 400
+        orgdata = {
+            "id": data.get('org_id'),
+            "org_email": data.get('org_email'),
+            "org_name": data.get('org_name'),
+            "org_country": data.get('org_country'),
+            "org_currency": data.get('org_currency'),
+            "org_created_by": data.get('org_created_by'),
+        }
+        org = qusers.setup_org(orgdata)
 
-        new_org = Organization(org_name=org_name, org_country=org_country, org_email=org_email, id=id)
-        db.session.add(new_org)
-        db.session.commit()
-
-        return jsonify(new_org.as_dict())
+        userdata = {
+            "id": data.get('user_id'),
+            "organization_id": data.get('organization_id'),
+            "username": data.get('username'),
+            "name": data.get('username'),
+            "status": "Active",
+            "email": data.get('email'),
+            "is_organization_admin": data.get('is_organization_admin'),
+            "role": data.get('role'),
+            
+        }
+        user = qusers.setup_user(userdata)
+    
+        return jsonify(org.as_dict())
 
 
 class EditOrg(Resource):
@@ -67,6 +84,13 @@ class EditOrg(Resource):
             org.org_diesel_price = request_data['org_diesel_price']
         if 'org_petrol_price' in request_data:
             org.org_petrol_price = request_data['org_petrol_price']
+        if 'org_lang' in request_data:
+            org.org_lang = request_data['org_lang']
+        if 'org_phone' in request_data:
+            org.org_phone = request_data['org_phone']
+        if 'org_logo_url' in request_data:
+            org_logo = request_data['org_logo']
+            org.org_logo = qresources.save_logo(org_logo, org_id)
         db.session.commit()
 
         return jsonify({'message': 'Organization updated successfully'})
@@ -140,23 +164,24 @@ class UsersByOrg(Resource):
             }
         result = qusers.add_user(data)
         user = result.as_dict()
+
+        response = requests.post(
+            f"https://api.clerk.com/v1/organizations/{org_id}/invitations", 
+            headers={
+                "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}",
+                "Content-Type": "application/json"
+            },
+
+         
+            json={
+                "email_address": data["email"],
+                "role": data["role"],
+                "inviter_user_id": admin_id,
+                "expires_in_days": 30
+            }
+        )
+        print('>>>>>', response.json())
         return jsonify(user=user)
-
-
-
-        email = data.get('email')
-        username = data.get('username')
-        role = data.get('role')
-        phone = data.get('phone')
-        status = "active"
-        organization_id = org_id
-        user = User(email=email, username=username, name=username, role=role,
-                    phone=phone, organization_id=organization_id,
-                    status=status)
-
-        db.session.add(user)
-        db.session.commit()
-        return jsonify(user.as_dict())
 
 
 class UserById(Resource):
