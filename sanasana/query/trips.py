@@ -1,6 +1,6 @@
 from sanasana import db
 from sanasana import models
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func, cast, Float
 from sanasana.models import Organization, User, Operator, Trip
 from sqlalchemy.orm import aliased
@@ -111,6 +111,17 @@ def get_trip_by_id_status(trip_id, t_status):
         id=trip_id, t_status=t_status
     ).first()
     return act
+
+
+def get_recent_trips_count_by_org(org_id):
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    recent_trips_count = db.session.query(
+        func.count(models.Trip.id)
+    ).filter(
+        models.Trip.t_organization_id == org_id,
+        models.Trip.t_created_at >= seven_days_ago
+    ).scalar()
+    return recent_trips_count
 
 
 def update_status(trip_id, t_status):

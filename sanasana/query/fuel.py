@@ -1,5 +1,6 @@
 from sanasana import db
 from sqlalchemy import func
+from datetime import datetime, timedelta
 from sanasana.models import Fuel_request
 
 
@@ -22,9 +23,13 @@ def add(data):
 
 
 def get_fuel_cost_sum_by_org(org_id):
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
     sum_of_values = db.session.query(
         func.sum(Fuel_request.f_total_cost)
-    ).filter(Fuel_request.f_organization_id == org_id).scalar()
+    ).filter(
+        Fuel_request.f_organization_id == org_id,
+        Fuel_request.f_created_at >= seven_days_ago
+        ).scalar()
 
     return sum_of_values
 
