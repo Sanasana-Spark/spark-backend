@@ -1,11 +1,15 @@
 import os
 import base64
 from datetime import datetime
+from flask import current_app
 
 
 # Function to Save Image
 def save_image(base64_string, trip_id):
-    folder = "odometer_images"
+    folder = os.path.join(
+            current_app.root_path, 'uploads', 'odometer_images'
+        )
+    
     os.makedirs(folder, exist_ok=True)  # Create folder if it doesn't exist
 
     filename = f"{trip_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.png"
@@ -18,7 +22,9 @@ def save_image(base64_string, trip_id):
 
 
 def save_receipt_image(base64_string, fuel_request_id):
-    folder = "receipt_images"
+    folder = os.path.join(
+            current_app.root_path, 'uploads', 'receipt_images'
+        )
     os.makedirs(folder, exist_ok=True)  # Create folder if it doesn't exist
 
     filename = f"{fuel_request_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.png"

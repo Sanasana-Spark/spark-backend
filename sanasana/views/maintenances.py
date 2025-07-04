@@ -33,6 +33,13 @@ class MaintenanceByOrganization(Resource):
         return jsonify(maintenance=result.as_dict())
 
 
+class MaintenanceHistoryByOrganization(Resource):
+    def get(self, org_id, user_id):
+        maintenances = qmaintenance.get_maintenance_history_by_organization(org_id)
+        maintenance_list = [maintenance.as_dict() for maintenance in maintenances]
+        return jsonify(maintenance_list=maintenance_list)
+
+
 class MaintenanceByAsset(Resource):
     def get(self, org_id, user_id, asset_id):
         maintenances = qmaintenance.get_maintenance_by_asset(org_id, asset_id)
@@ -58,8 +65,8 @@ class MaintenanceById(Resource):
         return jsonify(message="Maintenance record deleted successfully")
 
 
-
 # Register resources
 api_maintenance.add_resource(MaintenanceByOrganization, '/<org_id>/<user_id>/')
+api_maintenance.add_resource(MaintenanceHistoryByOrganization, '/history/<org_id>/<user_id>/')
 api_maintenance.add_resource(MaintenanceByAsset, '/by-asset/<org_id>/<user_id>/<asset_id>/')
 api_maintenance.add_resource(MaintenanceById, '/<org_id>/<user_id>/<maintenance_id>/')

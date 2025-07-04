@@ -4,6 +4,7 @@ from flask import current_app
 from sanasana import db
 import base64
 from sanasana.models import Maintenance
+from sanasana import models
 from sqlalchemy import desc
 from datetime import datetime
 
@@ -24,7 +25,7 @@ def save_attachment_file(attachment):
 
         # Ensure directory exists
         folder_path = os.path.join(
-            current_app.root_path, 'static', 'uploads', 'maintenance'
+            current_app.root_path, 'uploads', 'maintenance'
         )
         os.makedirs(folder_path, exist_ok=True)
 
@@ -39,6 +40,7 @@ def save_attachment_file(attachment):
         return f'static/uploads/maintenance/{new_filename}'
     
     return None
+
 
 def add_maintenance(maintenance, file=None):
     attachment_path = save_attachment_file(file) if file else None
@@ -62,10 +64,21 @@ def edit_maintenance(maintenance_id, data, file=None):
     return maintenance
 
 
+
 def get_maintenance_by_organization(org_id):
-    return db.session.query(Maintenance).join(Maintenance.asset)\
-        .filter(Maintenance.asset.has(a_organisation_id=org_id))\
-        .order_by(desc(Maintenance.id)).all()
+    query = models.Maintenance.query.filter(
+        models.Maintenance.m_organisation_id == org_id,
+        models.Maintenance.m_date >= datetime.now().date()
+    ).order_by(models.Maintenance.m_date.desc())
+    return query.all()
+
+
+def get_maintenance_history_by_organization(org_id):
+    query = models.Maintenance.query.filter(
+        models.Maintenance.m_organisation_id == org_id,
+        models.Maintenance.m_date < datetime.now().date()
+    ).order_by(models.Maintenance.m_date.desc())
+    return query.all()
 
 
 def get_maintenance_by_asset(org_id, asset_id):
