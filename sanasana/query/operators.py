@@ -15,6 +15,14 @@ def get_operator_by_org(org_id):
     return act
 
 
+def get_operator_count_by_org(org_id):
+    count_of_operators = db.session.query(
+        func.count(Operator.id)  # Replace Operator.id with the appropriate column if needed
+    ).filter(Operator.o_organisation_id == org_id).scalar()
+
+    return count_of_operators
+
+
 def add_operator(data):
     operator = Operator()
 
