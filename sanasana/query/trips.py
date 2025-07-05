@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, cast, Float
 from sanasana.models import Organization, User, Operator, Trip
 from sqlalchemy.orm import aliased
+from sanasana.query import send_email as qsend_email
 
 
 def get_all_trips():
@@ -37,6 +38,7 @@ def add_trip(data):
 
     db.session.add(trip)
     db.session.commit()
+    qsend_email.send_trip_assigned_email(trip.o_email, trip.o_name)
     return trip
 
 
