@@ -64,7 +64,7 @@ class TripsByOrg(Resource):
         trip = result.as_dict()
         print(trip)
         if trip:
-            qsend_email.send_trip_assigned_email(trip.o_email, trip.o_name)
+            qsend_email.send_trip_assigned_email(trip["o_email"], trip["o_name"])
         return jsonify(trip=trip)
 
 
