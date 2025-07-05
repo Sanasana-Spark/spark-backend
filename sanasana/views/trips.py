@@ -62,9 +62,11 @@ class TripsByOrg(Resource):
 
         result = qtrip.add_trip(data)
         trip = result.as_dict()
-        print(trip)
         if trip:
-            qsend_email.send_trip_assigned_email(trip["o_email"], trip["o_name"])
+            message_recipient = trip["o_email"]
+            user_name = trip["o_name"]
+            print('name', user_name, 'email>>', message_recipient)
+            qsend_email.send_trip_assigned_email(message_recipient, user_name)
         return jsonify(trip=trip)
 
 
