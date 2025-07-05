@@ -4,9 +4,6 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
-from .. import  db
-from sanasana.query import trips as qtrip
-from sanasana import models
 from sanasana.query import resources as qresources
 from flask_restful import Api, Resource
 from flask_cors import CORS
@@ -14,6 +11,11 @@ from dateutil.relativedelta import relativedelta
 import datetime
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
+from .. import  db
+from sanasana.query import trips as qtrip
+from sanasana import models
+from sanasana.query import send_email as qsend_email
+
 # import pandas as pd
 
 
@@ -60,6 +62,9 @@ class TripsByOrg(Resource):
 
         result = qtrip.add_trip(data)
         trip = result.as_dict()
+        print(trip)
+        if trip:
+            qsend_email.send_trip_assigned_email(trip.o_email, trip.o_name)
         return jsonify(trip=trip)
 
 
