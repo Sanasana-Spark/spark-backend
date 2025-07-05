@@ -38,7 +38,8 @@ def add_trip(data):
 
     db.session.add(trip)
     db.session.commit()
-    qsend_email.send_trip_assigned_email(trip.o_email, trip.o_name)
+    print(trip)
+    qsend_email.send_trip_assigned_email(trip.operator.o_email, trip.operator.o_name)
     return trip
 
 
