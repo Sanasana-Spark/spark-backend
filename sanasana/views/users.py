@@ -230,6 +230,12 @@ class EditUser(Resource):
         return jsonify({'message': 'user details updated'})
 
 
+class SendEmail(Resource):
+    def post(self):
+        qsend_email.send_trip_assigned_email("muthonimuriuki22@gmail.com", "Muthoni")
+        return "Email sent successfully!"
+
+
 api_users.add_resource(AllOrg, '/')
 api_users.add_resource(EditOrg, '/<org_id>/<admin_id>/')
 api_users.add_resource(Org, '/<org_id>/')
@@ -237,3 +243,4 @@ api_users.add_resource(UserOrg, '/user_org/')
 api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
 api_users.add_resource(EditUser, '/edituser/<org_id>/<admin_id>/')
 api_users.add_resource(UpdateUser, '/update_user/<org_id>/<email>')
+api_users.add_resource(SendEmail, '/mail/')
