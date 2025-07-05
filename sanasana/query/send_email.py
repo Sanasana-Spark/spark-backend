@@ -8,6 +8,7 @@ def send_email(message_recipient, message_subject, message_body):
     # with current_app.app_context():
     msg = Message(
         subject=message_subject,
+        sender="info@sanasanasustainability.com",
         recipients=[message_recipient],
         body=message_body
     )
@@ -15,7 +16,7 @@ def send_email(message_recipient, message_subject, message_body):
 
 
 def send_trip_assigned_email(message_recipient, user_name):
-    msg = Message("New Trip Alert !!", recipients=[message_recipient])
+    msg = Message("New Trip Alert !!", sender="info@sanasanasustainability.com", recipients=[message_recipient])
     msg.body = f"Hi {user_name},\n\n" \
                "You have been assigned a new trip.\n\n" \
                "Click the link below to view the details:\n" \
