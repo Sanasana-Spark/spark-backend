@@ -166,20 +166,19 @@ class UsersByOrg(Resource):
         user = result.as_dict()
 
         response = requests.post(
-            f"https://api.clerk.com/v1/organizations/{org_id}/invitations", 
-            headers={
-                "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}",
-                "Content-Type": "application/json"
-            },
+            f"https://api.clerk.com/v1/organizations/{org_id}/invitations",  
+            headers={ 
+                     "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}", 
+                     "Content-Type": "application/json" 
+                    }, 
+            json={ 
+                  "email_address": data["email"], 
+                  "role": data["role"], 
+                  "inviter_user_id": admin_id, 
+                  "expires_in_days": 30, 
+                  "redirect_url": "https://sanasanapwa.netlify.app/" 
+                } )
 
-         
-            json={
-                "email_address": data["email"],
-                "role": data["role"],
-                "inviter_user_id": admin_id,
-                "expires_in_days": 30
-            }
-        )
         print('>>>>>', response.json())
         return jsonify(user=user)
 
