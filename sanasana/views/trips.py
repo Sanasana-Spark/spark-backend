@@ -399,9 +399,9 @@ class TripReport(Resource):
                 "Status": trip.t_status,
                 "Est-duration": trip.t_duration,
                 "Actual-duration": (
-                    (trip.t_completed_at - trip.t_started_at).bit_length()
-                    if trip.t_completed_at is not None and trip.t_started_at 
-                    is not None else None
+                    str(trip.t_completed_at - trip.t_started_at)
+                    if trip.t_completed_at is not None and trip.t_started_at is not None
+                    else None
                 ),
                 "Origin-Lat": trip.t_start_lat,
                 "Origin-Lng": trip.t_start_long,
