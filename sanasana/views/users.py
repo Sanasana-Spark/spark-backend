@@ -165,6 +165,14 @@ class UsersByOrg(Resource):
         result = qusers.add_user(data)
         user = result.as_dict()
 
+        data["role"] = data["role"].strip().lower()
+        if data["role"] == "driver":
+            data["role"] = "org:operator"
+        elif data["role"] == "admin":
+            data["role"] = "org:admin" 
+        elif data["role"] == "manager":
+            data["role"] = "org:manager" 
+
         response = requests.post(
             f"https://api.clerk.com/v1/organizations/{org_id}/invitations", 
             headers={
@@ -177,10 +185,11 @@ class UsersByOrg(Resource):
                 "email_address": data["email"],
                 "role": data["role"],
                 "inviter_user_id": admin_id,
-                "expires_in_days": 30
+                "expires_in_days": 30,
+                "redirect_url": "https://sanasana.netlify.app/"
             }
         )
-        print('>>>>>', response.json())
+
         return jsonify(user=user)
 
 
