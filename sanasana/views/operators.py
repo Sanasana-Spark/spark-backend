@@ -40,21 +40,23 @@ class AllOperators(Resource):
             "status": "active",
         }
         qusers.add_user(userdata)
+
+        data["o_role"] = data["o_role"].strip().lower()
+        if data["o_role"] == "driver":
+            data["o_role"] = "org:operator"
         response = requests.post(
             f"https://api.clerk.com/v1/organizations/{org_id}/invitations",  
             headers={ 
-                    "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}", 
-                    "Content-Type": "application/json" 
-                    }, 
-            json={ 
-                "email_address": data["o_email"], 
-                "role": "Driver", 
-                "inviter_user_id": user_id, 
-                "expires_in_days": 30, 
+                    "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}",
+                    "Content-Type": "application/json"
+                    },
+            json={
+                "email_address": data["o_email"],
+                "role": data["o_role"],
+                "inviter_user_id": user_id,
+                "expires_in_days": 30,
                 "redirect_url": "https://sanasanapwa.netlify.app/" 
-                } )
-
-        print('>>>>>', response.json())
+                })
         return jsonify(operator=operator)
 
 

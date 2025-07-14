@@ -162,24 +162,34 @@ class UsersByOrg(Resource):
             "username": data["username"],
             "status": "active"
             }
-        result = qusers.add_uer(data)
+        result = qusers.add_user(data)
         user = result.as_dict()
 
-        response = requests.post(
-            f"https://api.clerk.com/v1/organizations/{org_id}/invitations",  
-            headers={ 
-                     "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}", 
-                     "Content-Type": "application/json" 
-                    }, 
-            json={ 
-                  "email_address": data["email"], 
-                  "role": data["role"], 
-                  "inviter_user_id": admin_id, 
-                  "expires_in_days": 30, 
-                  "redirect_url": "https://sanasanapwa.netlify.app/" 
-                } )
+        data["role"] = data["role"].strip().lower()
+        if data["role"] == "driver":
+            data["role"] = "org:operator"
+        elif data["role"] == "admin":
+            data["role"] = "org:admin" 
+        elif data["role"] == "manager":
+            data["role"] = "org:manager" 
 
-        print('>>>>>', response.json())
+        response = requests.post(
+            f"https://api.clerk.com/v1/organizations/{org_id}/invitations", 
+            headers={
+                "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}",
+                "Content-Type": "application/json"
+            },
+
+         
+            json={
+                "email_address": data["email"],
+                "role": data["role"],
+                "inviter_user_id": admin_id,
+                "expires_in_days": 30,
+                "redirect_url": "https://sanasana.netlify.app/"
+            }
+        )
+
         return jsonify(user=user)
 
 
