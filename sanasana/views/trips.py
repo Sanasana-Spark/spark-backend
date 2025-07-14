@@ -399,9 +399,9 @@ class TripReport(Resource):
                 "Status": trip.t_status,
                 "Est-duration": trip.t_duration,
                 "Actual-duration": (
-                    (trip.t_completed_at - trip.t_started_at).bit_length()
-                    if trip.t_completed_at is not None and trip.t_started_at 
-                    is not None else None
+                    str(trip.t_completed_at - trip.t_started_at)
+                    if trip.t_completed_at is not None and trip.t_started_at is not None
+                    else None
                 ),
                 "Origin-Lat": trip.t_start_lat,
                 "Origin-Lng": trip.t_start_long,
@@ -427,20 +427,13 @@ class TripReport(Resource):
 
 class internal_customer_metrics(Resource):
     def get(self):
-        report_type = request.args.get('report_type').lower()
-        if report_type is None:
-            report_type = 'weekly'  # Default to daily if not specified
-
-        end_date = datetime.datetime.now()
-        start_date = None
-
-        if report_type == "daily":
-            start_date = end_date - datetime.timedelta(days=1)
-        if report_type == "weekly":
-            start_date = end_date - datetime.timedelta(weeks=1)
-        if report_type == "monthly":
-            # Handle month start - safe for month boundaries
-            start_date = end_date - relativedelta(months=1)
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        if not start_date or not end_date:
+            return {
+                "error": "start_date and end_date are required"
+            }, 400
+        
         report = qtrip.get_internal_customer_metric_report(start_date, end_date)
         return jsonify(report)
 
