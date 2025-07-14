@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from werkzeug.utils import secure_filename
 import os
+import requests
 from .. import db
 from flask_restful import Api, Resource
 from sanasana import models
@@ -35,10 +36,25 @@ class AllOperators(Resource):
             "role": "Driver",
             "phone": data["o_phone"],
             "name": data["o_name"],
-            "username": data["o_name"],
+            "username": data["o_username"],
             "status": "active",
         }
         qusers.add_user(userdata)
+        response = requests.post(
+            f"https://api.clerk.com/v1/organizations/{org_id}/invitations",  
+            headers={ 
+                    "Authorization": f"Bearer {current_app.config['CLERK_SECRET_KEY']}", 
+                    "Content-Type": "application/json" 
+                    }, 
+            json={ 
+                "email_address": data["o_email"], 
+                "role": "Driver", 
+                "inviter_user_id": user_id, 
+                "expires_in_days": 30, 
+                "redirect_url": "https://sanasanapwa.netlify.app/" 
+                } )
+
+        print('>>>>>', response.json())
         return jsonify(operator=operator)
 
 

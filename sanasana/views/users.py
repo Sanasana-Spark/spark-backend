@@ -162,7 +162,7 @@ class UsersByOrg(Resource):
             "username": data["username"],
             "status": "active"
             }
-        result = qusers.add_user(data)
+        result = qusers.add_uer(data)
         user = result.as_dict()
 
         response = requests.post(
