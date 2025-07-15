@@ -11,6 +11,9 @@ def get_users_by_org(org_id):
     return User.query.filter_by(organization_id=org_id).order_by(models.User.default_id.desc()).all()
 
 
+def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
+
 def add_user(data):
 
     user = models.User()

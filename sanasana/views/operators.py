@@ -25,22 +25,28 @@ class AllOperators(Resource):
 
         data["o_organisation_id"] = org_id
         data["o_created_by"] = user_id
-
-
         result = qoperator.add_operator(data)
 
         operator = result.as_dict()
-        userdata = {
-            "organization_id": org_id,
-            "email": data["o_email"],
-            "role": "Driver",
-            "phone": data["o_phone"],
-            "name": data["o_name"],
-            "username": data["o_username"],
-            "status": "active",
-        }
-        qusers.add_user(userdata)
+        
+        #check if user already exists
+        existing_user = qusers.get_user_by_email(data["o_email"])
+        if existing_user:
+            pass
+        else:
+            userdata = {
+                "organization_id": org_id,
+                "email": data["o_email"],
+                "role": "Driver",
+                "phone": data["o_phone"],
+                "name": data["o_name"],
+                "username": data["o_name"],
+                "status": "active",
+            }
+            qusers.add_user(userdata)
 
+        # Send invitation to Clerk
+        # Ensure the role is in lowercase and matches Clerk's expected format
         data["o_role"] = data["o_role"].strip().lower()
         if data["o_role"] == "driver":
             data["o_role"] = "org:operator"
