@@ -52,6 +52,12 @@ class AllOrg(Resource):
             
         }
         user = qusers.setup_user(userdata)
+
+        if user and org:
+            # Send email to the user
+            qsend_email.send_organization_creation_success_email(
+                user.email, org.org_name
+            )
     
         return jsonify(org.as_dict())
 
