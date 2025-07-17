@@ -2,6 +2,7 @@ from sanasana import db
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from sanasana.models import Fuel_request
+from sanasana import  models
 
 
 def add(data):
@@ -39,3 +40,15 @@ def get_fuel_request_by_org(org_id):
         f_organization_id=org_id
     ).all()
     return act
+
+
+def get_fuel_expenses_by_org(org_id, start_date=None, end_date=None):
+    query = models.TripExpense.query.filter_by(
+        te_organization_id=org_id, te_type='Fuel')
+    
+    if start_date:
+        query = query.filter(models.TripExpense.te_created_at >= start_date)
+    if end_date:
+        query = query.filter(models.TripExpense.te_created_at <= end_date)
+
+    return query.all()
