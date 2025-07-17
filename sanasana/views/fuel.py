@@ -1,6 +1,7 @@
 from flask import (
     Blueprint,  jsonify, request
 )
+import requests
 from werkzeug.utils import secure_filename
 import os
 from .. import db
@@ -8,7 +9,10 @@ from sanasana.query import trips as qtrip
 from sanasana.query import assets as qasset
 from sanasana.query import fuel as qfuel_request
 from sanasana.query.fuel import Fuel_request
+from sanasana.query import wialon as qwialon 
 from flask_restful import Api, Resource
+import json
+import urllib.parse
 
 
 bp = Blueprint('fuel', __name__, url_prefix='/fuel')
@@ -55,8 +59,31 @@ class FuelRequest(Resource):
         return jsonify(fuel_result=fuel_result)
             
 
+class WialonTest(Resource):
+    def get(self):
+        sid = qwialon.login_to_wialon()
+        print(sid)
+        params = {
+            "spec": {
+                "itemsType": "avl_unit",
+                "propName": "sys_name",
+                "propValueMask": "*",
+                "sortType": "sys_name"
+            },
+            "force": 1,
+            "flags": 1,
+            "from": 0,
+            "to": 0
+        }
+        encoded_params = urllib.parse.quote(json.dumps(params))
+        url = f"https://hst-api.wialon.com/wialon/ajax.html?svc=core/search_items&params={encoded_params}&sid={sid}"
+        response = requests.get(url)
+        return jsonify(response.json())
+    
+
 api_fuel.add_resource(AllFuelRequest, '/<org_id>/<user_id>/')
 api_fuel.add_resource(FuelRequest, '/<org_id>/<user_id>/<trip_id>/')
+api_fuel.add_resource(WialonTest, '/wialon/')
 
 
 def calculate_f_litres(distance, efficiency_rate, load):
