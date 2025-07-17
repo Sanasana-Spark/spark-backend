@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 from sanasana import db
 import base64
-from sanasana.models import Maintenance
+from sanasana.models import Maintenance, User, Asset
 from sanasana import models
 from sqlalchemy import desc
 from datetime import datetime
@@ -93,5 +93,45 @@ def delete_maintenance(maintenance_id):
     db.session.delete(maintenance)
     db.session.commit()
     return maintenance
+
+
+
+def get_report(org_id, start_date, end_date):
+
+    # Validate date inputs
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except Exception:
+        return jsonify(error="Invalid date format. Use YYYY-MM-DD."), 400
+
+    # Query with joins and filtering
+    results = (
+        db.session.query(Maintenance, User.name, Asset.a_license_plate)
+        .join(User, User.id == Maintenance.m_created_by)
+        .join(Asset, Asset.id == Maintenance.m_asset_id)
+        .filter(
+            Maintenance.m_organisation_id == org_id,
+            Maintenance.m_date.between(start, end)
+        )
+        .order_by(Maintenance.m_date.desc())
+        .all()
+    )
+
+    # Format results
+    maintenance_list = []
+    for maintenance, created_by_name, license_plate in results:
+        maintenance_list.append({
+            "created_by": created_by_name,
+            "asset_License": license_plate,
+            "type": maintenance.m_type,
+            "description": maintenance.m_description,
+            "date": maintenance.m_date.strftime('%d/%m/%Y') if maintenance.m_date else None,
+            "total_cost": maintenance.m_total_cost,
+            "insurance_coverage": maintenance.m_insurance_coverage,
+            "status": maintenance.m_status,
+        })
+
+    return maintenance_list
 
 
