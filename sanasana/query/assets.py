@@ -82,9 +82,25 @@ def delete_asset(asset_id):
     asset = models.Asset.query.get(asset_id)
     if not asset:
         raise ValueError(f"Asset with ID {asset_id} not found")
+
+    # Check if asset is attached to any operator
+    operator = models.Operator.query.filter_by(o_assigned_asset=asset_id).first()
+    if operator:
+        raise ValueError("Asset is still attached to Operator")
+
+    # Check if asset is attached to any trips
+    trips = models.Trip.query.filter_by(t_asset_id=asset_id).all()
+    if trips:
+        for trip in trips:
+            trip.t_status = "DELETED"  # Or set a custom flag if you use soft delete logic
+        db.session.commit()
+        return f"Asset {asset_id} deleted successfully"
+    
+    # If not attached to operator or trips, delete asset
     db.session.delete(asset)
     db.session.commit()
-    return asset
+    return f"Asset {asset_id} deleted successfully"
+
 
 
 def add_invoice(asset_id, data):
