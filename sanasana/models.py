@@ -168,6 +168,7 @@ class Operator(db.Model):
     o_cum_mileage = db.Column(db.Numeric(), nullable=True)
     o_expirence = db.Column(db.Numeric(), nullable=True)
     o_attachment1 = db.Column(db.String(200), nullable=True)
+    deleted = db.Column(db.Boolean, nullable=True, default=False)
     asset = db.relationship('Asset', backref='operator')
     user = db.relationship('User', backref='operator', uselist=False,
                            primaryjoin='foreign(Operator.o_email) == User.email'
