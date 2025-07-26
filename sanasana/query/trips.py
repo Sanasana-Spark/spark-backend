@@ -9,6 +9,32 @@ from sqlalchemy.orm import aliased
 def get_all_trips():
     return Trip.query.all()
 
+def get_specific_trips(state, org_id):
+    """
+    Returns trips based on the state and organization ID.
+    """
+    trips = Trip.query.filter_by(t_organization_id=org_id).all()
+    if state == "new":
+        trips = [trip for trip in trips if trip.t_status == "PENDING" or trip.t_status == "Pending"]
+    elif state == "pending-approval":
+        trips = [trip for trip in trips if trip.t_status == "REQUESTED" or trip.t_status == "Requested" or not trip.t_actual_cost]
+    elif state == "completed":
+        trips = [trip for trip in trips if trip.t_status == "COMPLETED" or trip.t_status == "Completed"]
+    return trips
+
+def get_driver_specific_trips(state, org_id, user_id):
+    """
+    Returns trips based on the state and organization ID.
+    """
+    trips = Trip.query.filter_by(t_organization_id=org_id, t_operator_id=user_id).all()
+    if state == "new":
+        trips = [trip for trip in trips if trip.t_status == "PENDING" or trip.t_status == "Pending"]
+    elif state == "current":
+        trips = [trip for trip in trips if trip.t_status == "REQUESTED" or trip.t_status == "Requested" or trip.t_status == "IN_PROGRESS" or trip.t_status == "IN-PROGRESS" or  trip.t_status == "In_Progress" or trip.t_status == "In-Progress" ]
+    elif state == "completed":
+        trips = [trip for trip in trips if trip.t_status == "COMPLETED" or trip.t_status == "Completed"]
+    return trips
+
 def add_trip(data):
     trip = models.Trip()
     trip.t_created_by = data["t_created_by"]

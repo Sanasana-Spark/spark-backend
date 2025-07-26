@@ -27,8 +27,15 @@ api_trips = Api(bp)
 class TripsByOrg(Resource):
     def get(self, org_id, user_id):
         """ list all trips """
-        trips = [trip.as_dict() for trip in qtrip.get_trip_by_org(org_id)]
-        return jsonify(trips)
+        state = request.args.get('state', None) # new or pending-approval or completed
+        if state not in ["new", "pending-approval", "completed", None]:
+            return abort(400, description="Invalid state. Use 'new', 'pending-approval', 'completed' or leave empty for all trips.")
+        if state is None:
+            trips = [trip.as_dict() for trip in qtrip.get_trip_by_org(org_id)]
+            return jsonify(trips)
+        else:
+            trips = [trip.as_dict() for trip in qtrip.get_specific_trips(state, org_id)]
+            return jsonify(trips)
     
     def post(self, org_id, user_id):
         """ Add an trip """
@@ -68,6 +75,16 @@ class TripsByOrg(Resource):
             print('name', user_name, 'email>>', message_recipient)
             qsend_email.send_trip_assigned_email(message_recipient, user_name)
         return jsonify(trip=trip)
+    
+    
+class TripsByOrgOperator(Resource):
+    def get(self, org_id, user_id):
+        """ list all trips """
+        state = request.args.get('state', "current") # new or current or completed
+        if state not in ["current", "completed", "new"]:
+            return abort(400, description="Invalid state. Use 'current' or 'completed' or 'new'.")
+        trips = [trip.as_dict() for trip in qtrip.get_driver_specific_trips(state, org_id, user_id)]
+        return jsonify(trips)
 
 
 class TripsByAsset(Resource):
@@ -439,6 +456,7 @@ class internal_customer_metrics(Resource):
 
 
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
+api_trips.add_resource(TripsByOrgOperator, '/operator/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
