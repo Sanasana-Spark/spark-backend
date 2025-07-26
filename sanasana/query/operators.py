@@ -55,11 +55,23 @@ def add_operator(data):
 
 def delete_operator(operator_id):
     operator = models.Operator.query.get(operator_id)
-    if not operator:
-        raise ValueError(f"Asset with ID {operator_id} not found")
-    db.session.delete(operator)
-    db.session.commit()
-    return operator
+    if not operator or operator.deleted:
+        raise ValueError(f"Operator with ID {operator_id} not found")
+
+    # Check if operator is attached to any trips
+    attached_trips = models.Trip.query.filter_by(t_operator_id=operator_id).first()
+    
+    if attached_trips:
+        # Scenario B: Mark operator as deleted
+        operator.deleted = True
+        db.session.commit()
+        return True  # Indicates soft-delete
+    else:
+        # Scenario A: No trips -> delete operator
+        db.session.delete(operator)
+        db.session.commit()
+        return True  # Indicates hard delete
+
 
 
 def add_operator_status(data):
