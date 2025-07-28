@@ -52,3 +52,89 @@ def get_fuel_expenses_by_org(org_id, start_date=None, end_date=None):
         query = query.filter(models.TripExpense.te_created_at <= end_date)
 
     return query.all()
+
+def calculate_carbon_emission(distance_km, fuel_type, fuel_amount_litres):
+    """
+    Calculate CO₂ emissions based on fuel used.
+    
+    Parameters:
+        distance_km (float): Distance travelled in kilometers.
+        fuel_type (str): Type of fuel ('petrol', 'diesel', or 'lpg').
+        fuel_amount_litres (float): Amount of fuel consumed in litres.
+
+    Returns:
+        float: CO₂ emissions in kilograms.
+    """
+    
+    # Emission factors in kg CO₂ per litre
+    emission_factors = {
+        'petrol': 2.31,
+        'diesel': 2.68,
+        'lpg': 1.51
+    }
+
+    # Normalize fuel type and validate
+    fuel_type = fuel_type.strip().lower()
+    if fuel_type not in emission_factors:
+        raise ValueError(f"Unsupported fuel type: {fuel_type}. Choose from 'petrol', 'diesel', 'lpg'.")
+
+    emission_factor = emission_factors[fuel_type]
+    co2_emissions = fuel_amount_litres * emission_factor
+
+    return round(co2_emissions, 2)
+
+
+def calculate_carbon_emission_distance_based(distance_km, fuel_consumption_rate, fuel_type):
+    """
+    Calculate CO₂ emissions based on distance and fuel consumption rate.
+
+    Parameters:
+        distance_km (float): Distance travelled in kilometers.
+        fuel_consumption_rate (float): Fuel consumption rate in liters/km (or L/100km ÷ 100).
+        fuel_type (str): Type of fuel ('petrol', 'diesel', or 'lpg').
+
+    Returns:
+        float: CO₂ emissions in kilograms.
+    """
+    emission_factors = {
+        'petrol': 2.31,
+        'diesel': 2.68,
+        'lpg': 1.51
+    }
+
+    fuel_type = fuel_type.strip().lower()
+    if fuel_type not in emission_factors:
+        raise ValueError(f"Unsupported fuel type: {fuel_type}. Choose from 'petrol', 'diesel', 'lpg'.")
+
+    fuel_used = distance_km * fuel_consumption_rate
+    co2_emissions = fuel_used * emission_factors[fuel_type]
+
+    return round(co2_emissions, 2)
+
+
+def calculate_carbon_emission_efficiency_based(distance_km, fuel_efficiency_kmpl, fuel_type):
+    """
+    Calculate CO₂ emissions based on distance and fuel efficiency.
+
+    Parameters:
+        distance_km (float): Distance travelled in kilometers.
+        fuel_efficiency_kmpl (float): Fuel efficiency in km/liter.
+        fuel_type (str): Type of fuel ('petrol', 'diesel', or 'lpg').
+
+    Returns:
+        float: CO₂ emissions in kilograms.
+    """
+    emission_factors = {
+        'petrol': 2.31,
+        'diesel': 2.68,
+        'lpg': 1.51
+    }
+
+    fuel_type = fuel_type.strip().lower()
+    if fuel_type not in emission_factors:
+        raise ValueError(f"Unsupported fuel type: {fuel_type}. Choose from 'petrol', 'diesel', 'lpg'.")
+
+    fuel_used = distance_km / fuel_efficiency_kmpl
+    co2_emissions = fuel_used * emission_factors[fuel_type]
+
+    return round(co2_emissions, 2)

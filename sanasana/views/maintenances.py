@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_restful import Api, Resource
-from sanasana.query import maintenances as qmaintenance
+from sanasana.static import maintenances as qmaintenance
 from sanasana.models import Maintenance
 
 bp = Blueprint('maintenances', __name__, url_prefix='/maintenances/')
