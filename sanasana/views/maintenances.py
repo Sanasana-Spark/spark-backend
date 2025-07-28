@@ -63,6 +63,18 @@ class MaintenanceById(Resource):
         if not result:
             return jsonify(error="Maintenance record not found"), 404
         return jsonify(message="Maintenance record deleted successfully")
+    
+    
+
+class MaintenanceReport(Resource):
+    def get(self, org_id, user_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        maintenance_list = qmaintenance.get_report(org_id, start_date, end_date)
+
+        return jsonify(maintenance_list=maintenance_list)
+
 
 
 # Register resources
@@ -70,3 +82,5 @@ api_maintenance.add_resource(MaintenanceByOrganization, '/<org_id>/<user_id>/')
 api_maintenance.add_resource(MaintenanceHistoryByOrganization, '/history/<org_id>/<user_id>/')
 api_maintenance.add_resource(MaintenanceByAsset, '/by-asset/<org_id>/<user_id>/<asset_id>/')
 api_maintenance.add_resource(MaintenanceById, '/<org_id>/<user_id>/<maintenance_id>/')
+api_maintenance.add_resource(MaintenanceReport, '/report/<org_id>/<user_id>/')
+
