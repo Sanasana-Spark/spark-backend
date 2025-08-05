@@ -55,7 +55,7 @@ def get_fuel_expenses_by_org(org_id, start_date=None, end_date=None):
     return query.all()
 
 
-def calculate_carbon_emission(distance_km, fuel_type, fuel_amount_litres):
+def calculate_carbon_emission(fuel_type, fuel_amount_litres):
     """
     Calculate CO₂ emissions based on fuel used.
 
@@ -79,7 +79,8 @@ def calculate_carbon_emission(distance_km, fuel_type, fuel_amount_litres):
         )
 
     emission_factor = emission_factors[fuel_type]
-    co2_emissions = fuel_amount_litres * emission_factor
+    print(f"Fuel type: {fuel_type}, Amount in litres: {fuel_amount_litres}, Emission factor: {emission_factor}")
+    co2_emissions = float(fuel_amount_litres) * emission_factor
 
     return round(co2_emissions, 2)
 
@@ -105,6 +106,10 @@ def calculate_carbon_emission_distance_based(
         raise ValueError(
             f"Unsupported fuel type: {fuel_type}. Choose from 'petrol', 'diesel', 'lpg'."
         )
+    if isinstance(distance_km, str):
+        distance_km = distance_km.lower().replace("km", "").strip()
+        distance_km = float(distance_km)
+    print(f"Distance in km: {distance_km}, Fuel consumption rate: {fuel_consumption_rate}, Fuel type: {fuel_type}") 
 
     fuel_used = distance_km * fuel_consumption_rate
     co2_emissions = fuel_used * emission_factors[fuel_type]
@@ -134,7 +139,11 @@ def calculate_carbon_emission_efficiency_based(
             f"Unsupported fuel type: {fuel_type}. Choose from 'petrol', 'diesel', 'lpg'."
         )
 
-    fuel_used = distance_km / fuel_efficiency_kmpl
+    # Handle distance_km as string with "km" or as a number
+    if isinstance(distance_km, str):
+        distance_km = distance_km.lower().replace("km", "").strip()
+        distance_km = float(distance_km)
+    fuel_used = distance_km / float(fuel_efficiency_kmpl)
     co2_emissions = fuel_used * emission_factors[fuel_type]
 
     return round(co2_emissions, 2)

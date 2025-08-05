@@ -262,6 +262,7 @@ class Trip(db.Model):
     t_odometer_image3 = db.Column(db.String(200), nullable=True)
     t_odometer_image4 = db.Column(db.String(200), nullable=True)
     t_odometer_image5 = db.Column(db.String(200), nullable=True)
+    t_carbon_emission = db.Column(db.Float, nullable=True)
     operator = db.relationship('Operator', backref='trips')
     asset = db.relationship('Asset', backref='trips')
 
