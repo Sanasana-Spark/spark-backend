@@ -300,7 +300,9 @@ class Trip_income(Resource):
             "ti_client_id": request_data["ti_client_id"],
             "ti_type": request_data["ti_type"],
             "ti_description": request_data["ti_description"],
-            "ti_amount": request_data["ti_amount"]
+            "ti_amount": request_data["ti_amount"],
+            "ti_paid_amount": request_data.get("ti_paid_amount", 0),
+            "ti_balance": request_data.get("ti_balance", request_data["ti_amount"])  # Optional field
         }
         result = qtrip.add_trip_income(data)
         trip_income = result.as_dict()

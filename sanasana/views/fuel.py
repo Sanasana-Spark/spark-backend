@@ -82,11 +82,29 @@ class FuelRequestReport(Resource):
         ]
 
         return jsonify(fuel_requests_list)
+    
+
+class CarbonEmissionCalculator(Resource):
+    def get(self):
+        distance_km = request.args.get('distance_km')
+        fuel_type = request.args.get('fuel_type')
+        fuel_amount_litres = request.args.get('fuel_amount_litres')
+        efficiency_rate = request.args.get('efficiency_rate')
+
+        if efficiency_rate and fuel_type:
+            t_carbon_emission = qfuel_request.calculate_carbon_emission_efficiency_based(distance_km, efficiency_rate, fuel_type)
+        elif fuel_amount_litres:
+            t_carbon_emission = qfuel_request.calculate_carbon_emission(fuel_type, fuel_amount_litres)
+        else:
+            t_carbon_emission = 0.0
+
+        return jsonify({"t_carbon_emission": t_carbon_emission})
 
 
 api_fuel.add_resource(AllFuelRequest, '/<org_id>/<user_id>/')
 api_fuel.add_resource(FuelRequest, '/<org_id>/<user_id>/<trip_id>/')
 api_fuel.add_resource(FuelRequestReport, '/<org_id>/<user_id>/report/')
+api_fuel.add_resource(CarbonEmissionCalculator, '/carbon-emission-calculator/')
 
 
 def calculate_f_litres(distance, efficiency_rate, load):

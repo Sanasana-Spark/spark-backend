@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, cast, Float
 from sanasana.models import Organization, User, Operator, Trip
 from sqlalchemy.orm import aliased
+import sanasana.query.fuel as qfuel_request
 
 
 def get_all_trips():
@@ -174,10 +175,20 @@ def update(trip_id, data):
     trip = models.Trip.query.filter_by(
         id=trip_id
     ).first()
+    
+    if data.get("t_status") == "Completed":
+        if trip.a_efficiency_rate and trip.a_fuel_type:
+            t_carbon_emission = qfuel_request.calculate_carbon_emission_efficiency_based(trip.t_distance, trip.a_efficiency_rate, trip.a_fuel_type)
+            data["t_carbon_emission"] = t_carbon_emission
+        elif trip.t_actual_fuel:
+            t_carbon_emission = qfuel_request.calculate_carbon_emission(trip.a_fuel_type, trip.t_actual_fuel)
+            data["t_carbon_emission"] = t_carbon_emission
+        else:
+            data["t_carbon_emission"] = 0.0
+
+
     if not trip:
         return None
-    # if data['attr'] == "resolved" and data["value"]:
-    #     issue.resolved_date = datetime.datetime.utcnow()
     for attr, value in data.items():
         setattr(trip, attr, value)
     db.session.commit()
