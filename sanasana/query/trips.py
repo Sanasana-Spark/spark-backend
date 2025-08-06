@@ -178,10 +178,10 @@ def update(trip_id, data):
     
     if data.get("t_status") == "Completed":
         if trip.a_efficiency_rate and trip.a_fuel_type:
-            t_carbon_emission = qfuel_request.calculate_carbon_emission_efficiency_based(trip.t_distance, trip.a_efficiency_rate, trip.a_fuel_type)
+            t_carbon_emission = qfuel_request.calculate_carbon_emission_efficiency_based(trip.t_distance, trip.asset.a_efficiency_rate, trip.asset.a_fuel_type)
             data["t_carbon_emission"] = t_carbon_emission
         elif trip.t_actual_fuel:
-            t_carbon_emission = qfuel_request.calculate_carbon_emission(trip.a_fuel_type, trip.t_actual_fuel)
+            t_carbon_emission = qfuel_request.calculate_carbon_emission(trip.asset.a_fuel_type, trip.t_actual_fuel)
             data["t_carbon_emission"] = t_carbon_emission
         else:
             data["t_carbon_emission"] = 0.0
