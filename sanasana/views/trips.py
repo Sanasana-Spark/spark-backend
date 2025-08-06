@@ -15,6 +15,7 @@ from .. import  db
 from sanasana.query import trips as qtrip
 from sanasana import models
 from sanasana.query import send_email as qsend_email
+from sanasana.query import fuel_request as qfuel_request
 
 # import pandas as pd
 
@@ -247,11 +248,13 @@ class Approve_Request(Resource):
             fuel_price = 1
 
         t_actual_fuel = t_actual_cost/fuel_price
+        t_carbon_emission = qfuel_request.calculate_carbon_emission(fuel_type, t_actual_fuel)
 
         trip = models.Trip.query.filter_by(id=t_id).first()
         if trip:
             trip.t_actual_fuel = t_actual_fuel
             trip.t_actual_cost = t_actual_cost
+            trip.t_carbon_emission = t_carbon_emission
             db.session.commit()
 
         fuel_request = models.Fuel_request.query.filter_by(f_trip_id=t_id).first()
