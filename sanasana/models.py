@@ -421,6 +421,7 @@ class Client(db.Model):
     c_to_email = db.Column(db.String(100), nullable=True)
     c_emailed = db.Column(db.Boolean, nullable=True)
     c_paid_amount = db.Column(db.Float, nullable=True)
+    c_is_deleted = db.Column(db.Boolean, default=False)
 
 
     def __repr__(self):

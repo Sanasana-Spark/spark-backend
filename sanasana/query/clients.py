@@ -37,13 +37,26 @@ def update_client(client_id, data):
 def delete_client(client_id):
     """
     Delete a client from the database.
+    Scenario 1: If client has no invoices, delete completely.
+    Scenario 2: If client has invoices, perform a soft delete.
     """
     client = models.Client.query.get(client_id)
     if not client:
         raise ValueError(f"Client with ID {client_id} not found")
-    db.session.delete(client)
-    db.session.commit()
-    return client
+
+    # Check if the client has any invoices
+    has_invoices = models.TripIncome.query.filter_by(ti_client_id=client_id).first()
+
+    if has_invoices:
+        # Scenario 2: Soft delete
+        client.c_is_deleted = True  # or client.deleted = True if renamed
+        db.session.commit()
+        return f"Client ID {client_id} soft deleted (invoices exist)"
+    else:
+        # Scenario 1: Hard delete
+        db.session.delete(client)
+        db.session.commit()
+        return f"Client ID {client_id} permanently deleted"
 
 
 def add_invoice(client_id, data):
