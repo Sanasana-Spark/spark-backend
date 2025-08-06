@@ -15,7 +15,7 @@ from .. import  db
 from sanasana.query import trips as qtrip
 from sanasana import models
 from sanasana.query import send_email as qsend_email
-from sanasana.query import fuel_request as qfuel_request
+from sanasana.query import fuel as qfuel_request
 
 # import pandas as pd
 
