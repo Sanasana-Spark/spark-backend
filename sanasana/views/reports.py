@@ -5,6 +5,7 @@ from flask_restful import Api, Resource
 from sanasana import models
 from sanasana.utils.excel_exporter import export_to_excel
 from sanasana.utils.pdf_exporter import export_to_pdf
+from sanasana.query import reports as qreports
 
 
 bp = Blueprint('reports', __name__, url_prefix='/reports')
@@ -75,6 +76,34 @@ class TripListingReport(Resource):
                 filename=f"trip_listing_report.pdf",
                 title="Trip Listing Report"
             )
- 
+        
+
+class internal_customer_metrics(Resource):
+    def get(self):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        export = request.args.get('export', 'pdf').lower()
+
+        if not start_date or not end_date:
+            return {
+                "error": "start_date and end_date are required"
+            }, 400
+
+        report = qreports.get_internal_customer_metric_report(start_date, end_date)
+        report_list = [report]
+        if export == "excel":
+            return export_to_excel(
+                report_list,
+                filename=f"internal_customer_metrics_report.xlsx",
+                sheet_name="Internal Customer Metrics Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                report_list,
+                filename=f"internal_customer_metrics_report.pdf",
+                title="Internal Customer Metrics Report"
+            )
+
 
 api_summaries.add_resource(TripListingReport, '/<org_id>/trip-listing/')
+api_summaries.add_resource(internal_customer_metrics, '/internal-customer-metrics/')
