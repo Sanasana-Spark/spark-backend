@@ -1,8 +1,8 @@
 from sanasana import db
 from sanasana import models
 from datetime import datetime, timedelta
-from sqlalchemy import func, cast, Float
-from sanasana.models import Organization, User, Operator, Trip
+from sqlalchemy import func
+from sanasana.models import Trip
 from sqlalchemy.orm import aliased
 import sanasana.query.fuel as qfuel_request
 

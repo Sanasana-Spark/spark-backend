@@ -6,6 +6,7 @@ from sanasana import models
 from sanasana.utils.excel_exporter import export_to_excel
 from sanasana.utils.pdf_exporter import export_to_pdf
 from sanasana.query import reports as qreports
+from sanasana.query import fuel as qfuel_request
 
 
 bp = Blueprint('reports', __name__, url_prefix='/reports')
@@ -105,5 +106,223 @@ class internal_customer_metrics(Resource):
             )
 
 
+class AssetListingReport(Resource):
+    def get(self, org_id):
+        export = request.args.get('export', 'excel').lower()
+
+        assets = models.Asset.query.filter_by(a_organisation_id=org_id).all()
+        assets_list = [asset.as_dict() for asset in assets]
+
+        if export == "excel":
+            return export_to_excel(
+                assets_list,
+                filename=f"assets_listing_report.xlsx",
+                sheet_name="Assets Listing Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                assets_list,
+                filename=f"assets_listing_report.pdf",
+                title="Assets Listing Report"
+            )
+        
+
+class NewAssetListingReport(Resource):
+    def get(self, org_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        export = request.args.get('export', 'excel').lower()
+
+        query = models.Asset.query.filter_by(a_organisation_id=org_id)
+
+        if start_date and end_date:
+            query = query.filter(models.Asset.a_created_at.between(start_date, end_date))
+
+        assets = query.all()
+        assets_list = [asset.as_dict() for asset in assets]
+
+        if export == "excel":
+            return export_to_excel(
+                assets_list,
+                filename=f"new_assets_report.xlsx",
+                sheet_name="New Assets Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                assets_list,
+                filename=f"new_assets_report.pdf",
+                title="New Assets Report"
+            )
+
+
+class FuelRequestReport(Resource):
+    def get(self, org_id, user_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        export = request.args.get('export', 'excel').lower()
+
+        user_org = models.Organization.query.filter_by(id=org_id).first()
+        fuel_expenses = qfuel_request.get_fuel_expenses_by_org(org_id, start_date, end_date)
+
+        fuel_requests_list = [
+            {
+                "vehicle": expense.asset.a_license_plate,
+                "operator": expense.operator.o_name,
+                "created_at": expense.te_created_at.strftime('%Y-%m-%d'),
+                "fuel_type": expense.asset.a_fuel_type,
+                "amount": f"{expense.te_amount} {user_org.org_currency}",
+                "description": expense.te_description,
+                "distance": expense.trip.t_distance,
+                "litres": round(expense.trip.t_actual_fuel, 2),
+                "Trip status": expense.trip.t_status,
+              
+            }
+            for expense in fuel_expenses
+        ]
+        if export == "excel":
+            return export_to_excel(
+                fuel_requests_list,
+                filename=f"fuel_requests_expense_report.xlsx",
+                sheet_name="Fuel Requests Expense Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                fuel_requests_list,
+                filename=f"fuel_requests_expense_report.pdf",
+                title="Fuel Requests Expense Report"
+            )
+        
+
+class MaintenanceListingReport(Resource):
+    def get(self, org_id, user_id):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        export = request.args.get('export', 'excel').lower()
+
+        maintenance_list = qreports.get_report(org_id, start_date, end_date)
+
+        if export == "excel":
+            return export_to_excel(
+                maintenance_list,
+                filename=f"maintenance_listing_report.xlsx",
+                sheet_name="Maintenance Listing Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                maintenance_list,
+                filename=f"maintenance_listing_report.pdf",
+                title="Maintenance Listing Report"
+            )
+        
+
+class OperatorsListingReport(Resource):
+    def get(self, org_id):
+        export = request.args.get('export', 'excel').lower()
+
+        operators = models.Operator.query.filter_by(o_organisation_id=org_id).all()
+
+        operators_list = [
+            {
+                "o_created_at": (
+                    operator.o_created_at.strftime("%d.%m.%Y")
+                    if operator.o_created_at
+                    else None
+                ),
+                "Name": operator.o_name,
+                "Assigned Asset": operator.asset.a_license_plate,
+                "National ID": operator.o_national_id,
+                "Phone": operator.o_phone,
+                "Email": operator.o_email,
+                "Role": operator.o_role,
+                "Status": operator.o_status,
+                "Cumulative Mileage": operator.o_cum_mileage,
+                "Experience": operator.o_expirence,
+                "License ID": operator.o_lincense_id,
+                "License Type": operator.o_lincense_type,
+                "License Expiry": (
+                    operator.o_lincense_expiry.strftime("%d.%m.%Y")
+                    if operator.o_lincense_expiry
+                    else None
+                ),
+            }
+            for operator in operators
+        ]
+
+        if export == "excel":
+            return export_to_excel(
+                operators_list,
+                filename=f"operators_listing_report.xlsx",
+                sheet_name="Operators Listing Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                operators_list,
+                filename=f"operators_listing_report.pdf",
+                title="Operators Listing Report"
+            )
+
+        
+class NewOperatorsListingReport(Resource):
+    def get(self, org_id):
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        export = request.args.get('export', 'excel').lower()
+
+        query = models.Operator.query.filter_by(o_organisation_id=org_id)
+
+        if start_date and end_date:
+            query = query.filter(
+                models.Operator.o_created_at.between(start_date, end_date)
+            )
+
+        operators = query.all()
+
+        operators_list = [
+            {
+                "o_created_at": (
+                    operator.o_created_at.strftime("%d.%m.%Y")
+                    if operator.o_created_at
+                    else None
+                ),
+                "Name": operator.o_name,
+                "Assigned Asset": operator.asset.a_license_plate,
+                "National ID": operator.o_national_id,
+                "Phone": operator.o_phone,
+                "Email": operator.o_email,
+                "Role": operator.o_role,
+                "Status": operator.o_status,
+                "Cumulative Mileage": operator.o_cum_mileage,
+                "Experience": operator.o_expirence,
+                "License ID": operator.o_lincense_id,
+                "License Type": operator.o_lincense_type,
+                "License Expiry": (
+                    operator.o_lincense_expiry.strftime("%d.%m.%Y")
+                    if operator.o_lincense_expiry
+                    else None
+                ),
+            }
+            for operator in operators
+        ]
+
+        if export == "excel":
+            return export_to_excel(
+                operators_list,
+                filename=f"operators_listing_report.xlsx",
+                sheet_name="Operators Listing Report"
+            )
+        elif export == "pdf":
+            return export_to_pdf(
+                operators_list,
+                filename=f"operators_listing_report.pdf",
+                title="Operators Listing Report"
+            )
+
+
 api_summaries.add_resource(TripListingReport, '/<org_id>/trip-listing/')
 api_summaries.add_resource(internal_customer_metrics, '/internal-customer-metrics/')
+api_summaries.add_resource(AssetListingReport, '/<org_id>/asset-listing/')
+api_summaries.add_resource(NewAssetListingReport, '/<org_id>/new-asset-listing/')
+api_summaries.add_resource(FuelRequestReport, '/<org_id>/<user_id>/fuel-requests/')
+api_summaries.add_resource(MaintenanceListingReport, '/<org_id>/<user_id>/maintenance-listing/')
+api_summaries.add_resource(OperatorsListingReport, '/<org_id>/operators-listing/')
+api_summaries.add_resource(NewOperatorsListingReport, '/<org_id>/new-operators-listing/')

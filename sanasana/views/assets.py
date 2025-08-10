@@ -10,6 +10,7 @@ import datetime
 from datetime import datetime
 from .. import db
 from sanasana.query import assets as qasset
+from sanasana.query import clients as qclients
 from sanasana.models import Status, Asset, Trip,  TripIncome, TripExpense
 from sanasana import models
 
@@ -217,20 +218,6 @@ class FleetPerformance(Resource):
         return jsonify(fleet_data=fleet_data)
 
 
-class AssetsReport(Resource):
-    def get(self, org_id):
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-
-        query = models.Asset.query.filter_by(a_organisation_id=org_id)
-
-        if start_date and end_date:
-            query = query.filter(models.Asset.a_created_at.between(start_date, end_date))
-
-        assets = query.all()
-        return jsonify([asset.as_dict() for asset in assets])
-
-
 class IncomeByAssetId(Resource):
     def get(self, org_id, user_id, asset_id):
         invoices = models.TripIncome.query.filter(
@@ -353,7 +340,6 @@ class AssetPerformance(Resource):
 api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
 api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<asset_id>/')
 api_assets.add_resource(AssetStatus, '/status')
-api_assets.add_resource(AssetsReport, '/reports/<org_id>/')
 api_assets.add_resource(AssetPerformance, '/asset_performance/<org_id>/')
 api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
 api_assets.add_resource(IncomeByAssetId, '/income/<org_id>/<user_id>/<asset_id>/')

@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
-from sanasana.models import Organization, User, Operator, Trip
+from datetime import datetime
+from sanasana.models import Organization, User, Operator, Trip, Maintenance, Asset
 from sanasana import db
 from sqlalchemy import func, cast, Float
+from flask import jsonify
 
 
 def get_internal_customer_metric_report(start_date, end_date):
@@ -64,4 +65,44 @@ def get_internal_customer_metric_report(start_date, end_date):
         "unique_vehicles": unique_vehicles,
         "unique_operators": unique_operators
     }
+
+
+def get_report(org_id, start_date, end_date):
+
+    # Validate date inputs
+    try:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+    except Exception:
+        return jsonify(error="Invalid date format. Use YYYY-MM-DD."), 400
+
+    # Query with joins and filtering
+    results = (
+        db.session.query(Maintenance, User.name, Asset.a_license_plate)
+        .join(User, User.id == Maintenance.m_created_by)
+        .join(Asset, Asset.id == Maintenance.m_asset_id)
+        .filter(
+            Maintenance.m_organisation_id == org_id,
+            Maintenance.m_date.between(start, end)
+        )
+        .order_by(Maintenance.m_date.desc())
+        .all()
+    )
+
+    # Format results
+    maintenance_list = []
+    for maintenance, created_by_name, license_plate in results:
+        maintenance_list.append({
+            "created_by": created_by_name,
+            "asset_License": license_plate,
+            "type": maintenance.m_type,
+            "description": maintenance.m_description,
+            "date": maintenance.m_date.strftime('%d/%m/%Y') if maintenance.m_date else None,
+            "total_cost": maintenance.m_total_cost,
+            "insurance_coverage": maintenance.m_insurance_coverage,
+            "status": maintenance.m_status,
+        })
+
+    return maintenance_list
+
 
