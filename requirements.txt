@@ -29,3 +29,5 @@ werkzeug==3.0.3
 zipp==3.19.2
 python-dateutil==2.9.0.post0
 requests== 2.28.1
+reportlab==4.4.3
+openpyxl==3.1.5
