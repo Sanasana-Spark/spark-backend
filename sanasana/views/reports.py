@@ -307,14 +307,14 @@ class NewOperatorsListingReport(Resource):
         if export == "excel":
             return export_to_excel(
                 operators_list,
-                filename=f"operators_listing_report.xlsx",
-                sheet_name="Operators Listing Report"
+                filename=f"new_operators_listing_report.xlsx",
+                sheet_name="New Operators Listing Report"
             )
         elif export == "pdf":
             return export_to_pdf(
                 operators_list,
-                filename=f"operators_listing_report.pdf",
-                title="Operators Listing Report"
+                filename=f"new_operators_listing_report.pdf",
+                title="New Operators Listing Report"
             )
 
 
@@ -322,7 +322,7 @@ api_summaries.add_resource(TripListingReport, '/<org_id>/trip-listing/')
 api_summaries.add_resource(internal_customer_metrics, '/internal-customer-metrics/')
 api_summaries.add_resource(AssetListingReport, '/<org_id>/asset-listing/')
 api_summaries.add_resource(NewAssetListingReport, '/<org_id>/new-asset-listing/')
-api_summaries.add_resource(FuelRequestReport, '/<org_id>/<user_id>/fuel-requests/')
+api_summaries.add_resource(FuelRequestReport, '/<org_id>/<user_id>/fuel-requests-expense/')
 api_summaries.add_resource(MaintenanceListingReport, '/<org_id>/<user_id>/maintenance-listing/')
 api_summaries.add_resource(OperatorsListingReport, '/<org_id>/operators-listing/')
 api_summaries.add_resource(NewOperatorsListingReport, '/<org_id>/new-operators-listing/')
