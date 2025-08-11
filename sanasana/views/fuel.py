@@ -55,33 +55,6 @@ class FuelRequest(Resource):
         fuel_result = result.as_dict()
         qtrip.update_status(trip_id, "Requested")
         return jsonify(fuel_result=fuel_result)
-
-
-class FuelRequestReport(Resource):
-    def get(self, org_id, user_id):
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        user_org = models.Organization.query.filter_by(id=org_id).first()
-        fuel_expenses = qfuel_request.get_fuel_expenses_by_org(org_id, start_date, end_date)
-        print(f"Fuel expenses: {fuel_expenses}")
-
-        fuel_requests_list = [
-            {
-                "vehicle": expense.asset.a_license_plate,
-                "operator": expense.operator.o_name,
-                "created_at": expense.te_created_at.strftime('%Y-%m-%d'),
-                "fuel_type": expense.asset.a_fuel_type,
-                "amount": f"{expense.te_amount} {user_org.org_currency}",
-                "description": expense.te_description,
-                "distance": expense.trip.t_distance,
-                "litres": round(expense.trip.t_actual_fuel, 2),
-                "Trip status": expense.trip.t_status,
-              
-            }
-            for expense in fuel_expenses
-        ]
-
-        return jsonify(fuel_requests_list)
     
 
 class CarbonEmissionCalculator(Resource):
@@ -103,7 +76,6 @@ class CarbonEmissionCalculator(Resource):
 
 api_fuel.add_resource(AllFuelRequest, '/<org_id>/<user_id>/')
 api_fuel.add_resource(FuelRequest, '/<org_id>/<user_id>/<trip_id>/')
-api_fuel.add_resource(FuelRequestReport, '/<org_id>/<user_id>/report/')
 api_fuel.add_resource(CarbonEmissionCalculator, '/carbon-emission-calculator/')
 
 

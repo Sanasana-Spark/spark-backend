@@ -34,7 +34,8 @@ def register_blueprints(app):
         fuel,
         summaries,
         clients,
-        maintenances
+        maintenances,
+        reports 
     )
 
     app.register_blueprint(assets.bp)
@@ -46,3 +47,4 @@ def register_blueprints(app):
     app.register_blueprint(summaries.bp)
     app.register_blueprint(clients.bp)
     app.register_blueprint(maintenances.bp)
+    app.register_blueprint(reports.bp)

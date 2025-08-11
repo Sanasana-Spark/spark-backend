@@ -392,74 +392,6 @@ class TripExpenseByAsset(Resource):
         return jsonify(trip_expense=trip_expense)
 
 
-class TripReport(Resource):
-    def get(self, org_id):
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-
-        query = (
-            models.Trip.query
-            .filter_by(t_organization_id=org_id)
-            .order_by(models.Trip.t_created_at.desc())
-        )
-
-        if start_date and end_date:
-            query = query.filter(models.Trip.t_created_at.between(start_date, end_date))
-
-        trips = query.all()
-
-        trips_list = [
-            {
-                "Description": trip.t_type,
-                "Operator": trip.operator.o_name,
-                "Asset": trip.asset.a_license_plate,
-                "Make-model": (trip.asset.a_make + "- " + trip.asset.a_model),
-                "Start-date": trip.t_start_date.strftime("%d.%m.%Y") if trip.t_start_date else None,
-                "End-date": trip.t_end_date.strftime("%d.%m.%Y") if trip.t_end_date else None,
-                "Origin": trip.t_origin_place_query,
-                "Destination": trip.t_destination_place_query,
-                "Status": trip.t_status,
-                "Est-duration": trip.t_duration,
-                "Actual-duration": (
-                    str(trip.t_completed_at - trip.t_started_at)
-                    if trip.t_completed_at is not None and trip.t_started_at is not None
-                    else None
-                ),
-                "Origin-Lat": trip.t_start_lat,
-                "Origin-Lng": trip.t_start_long,
-                "Destination-Lat": trip.t_end_lat,
-                "Destination-Lng": trip.t_end_long,
-                "Tonnage": trip.t_load,
-                "Fuel-type": trip.asset.a_fuel_type,
-                "Fuel-in-Ltr": trip.t_actual_fuel,
-                "Total Cost": trip.t_actual_cost,
-                "End-od-reading": trip.t_end_od_reading,
-                "Start-Od_reading": trip.t_start_od_reading,
-                "Actual-distance": (
-                    trip.t_end_od_reading - trip.t_start_od_reading
-                    if trip.t_end_od_reading is not None and
-                    trip.t_start_od_reading is not None else None),
-                "Expected-distance": trip.t_distance,
-            }
-            for trip in trips
-        ]
-
-        return jsonify(trips_list)
-
-
-class internal_customer_metrics(Resource):
-    def get(self):
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        if not start_date or not end_date:
-            return {
-                "error": "start_date and end_date are required"
-            }, 400
-        
-        report = qtrip.get_internal_customer_metric_report(start_date, end_date)
-        return jsonify(report)
-
-
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByOrgOperator, '/operator/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
@@ -472,9 +404,6 @@ api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripIncomeByAsset, '/asset_income/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripExpenseByAsset, '/asset_expense/<org_id>/<user_id>/<asset_id>/')
-api_trips.add_resource(TripReport, '/reports/<org_id>/')
-api_trips.add_resource(internal_customer_metrics, '/reports/internal_customer_metrics/')
-
 
 
 def get_trip_column(trip_id, column_name):
