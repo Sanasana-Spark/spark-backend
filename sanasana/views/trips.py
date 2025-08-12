@@ -232,6 +232,15 @@ class OdometerReading(Resource):
         return jsonify(od_reading=od_reading)  
 
 
+class Trip_Original_Fuel_Request(Resource):
+    def get(self, org_id, user_id, trip_id):
+        """ Get original fuel request by trip id """
+        fuel_request = qfuel_request.get_fuel_request_by_trip(trip_id)
+        if not fuel_request:
+            return jsonify({"message": "No fuel request found for this trip"}), 404
+        return jsonify(fuel_request.as_dict())
+
+
 class Approve_Request(Resource):  
     def post(self, org_id, user_id):
         user_org = models.Organization.query.filter_by(id=org_id).first()
@@ -399,6 +408,7 @@ api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
+api_trips.add_resource(Trip_Original_Fuel_Request, '/fuel_request/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
 api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripIncomeByAsset, '/asset_income/<org_id>/<user_id>/<asset_id>/')
