@@ -3,6 +3,7 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 from sanasana.models import Fuel_request
 from sanasana import models
+from sanasana.query import trips as qtrip
 
 
 def add(data):
@@ -18,6 +19,8 @@ def add(data):
     fuel_request.f_distance = data["f_distance"]
     fuel_request.f_type = data["f_type"]
     fuel_request.f_request_type = data["f_request_type"]
+    fuel_request.f_estimated_litres = data.get("f_estimated_litres", None)
+    fuel_request.f_estimated_cost = data.get("f_estimated_cost", None)
     db.session.add(fuel_request)
     db.session.commit()
     return fuel_request
@@ -147,3 +150,36 @@ def calculate_carbon_emission_efficiency_based(
     co2_emissions = fuel_used * emission_factors[fuel_type]
 
     return round(co2_emissions, 2)
+
+
+def calculate_f_litres(org_id, trip_id):
+    trip = qtrip.get_trip_by_id(trip_id).as_dict()
+    efficiency_rate = float(trip['a_efficiency_rate']) if trip['a_efficiency_rate'] else 4.0  # Default to 4.0 if not set
+    if isinstance(trip['t_distance'], str):
+        distance_km = trip['t_distance'].lower().replace("km", "").strip()
+        distance_km = float(distance_km)
+
+    # Assuming a simple calculation where fuel consumption might be affected by the load
+    base_estimated_litres = round(distance_km / efficiency_rate, 2)
+    # additional_consumption = load * (0.05 * base_estimated_litres)
+    # consumption = base_estimated_litres - additional_consumption
+    cost_per_litre = get_fuel_price(org_id, trip['a_fuel_type'])
+
+    estimated_litres = base_estimated_litres
+    estimated_cost = round(estimated_litres * cost_per_litre, 2)
+    return estimated_litres, estimated_cost
+
+
+def get_fuel_price(org_id, f_type):
+    org = models.Organization.query.filter_by(id=org_id).first()
+    petrol_price = org.org_petrol_price if org else 0
+    diesel_price = org.org_diesel_price if org else 0
+
+    f_type = f_type.strip().lower()
+    if f_type == "petrol":
+        fuel_price = petrol_price
+    elif f_type == "diesel":
+        fuel_price = diesel_price
+    else:
+        fuel_price = diesel_price
+    return fuel_price if fuel_price else None
