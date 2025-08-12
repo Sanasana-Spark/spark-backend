@@ -10,11 +10,14 @@ import sanasana.query.fuel as qfuel_request
 def get_all_trips():
     return Trip.query.all()
 
+
 def get_specific_trips(state, org_id):
     """
     Returns trips based on the state and organization ID.
     """
-    trips = Trip.query.filter_by(t_organization_id=org_id).all()
+    trips = Trip.query.filter_by(t_organization_id=org_id).order_by(
+        Trip.t_created_at.desc()
+    ).all()
     if state == "new":
         trips = [trip for trip in trips if trip.t_status == "PENDING" or trip.t_status == "Pending"]
     elif state == "pending-approval":
