@@ -15,9 +15,30 @@ def get_specific_trips(state, org_id):
     """
     Returns trips based on the state and organization ID.
     """
-    trips = Trip.query.filter_by(t_organization_id=org_id).order_by(
-        Trip.t_created_at.desc()
+    TripIncomeAlias = aliased(models.TripIncome)
+    TripExpenseAlias = aliased(models.TripExpense)
+
+    trips_data = db.session.query(
+        models.Trip,
+        func.coalesce(func.sum(TripIncomeAlias.ti_amount), 0.0).label("t_income"),
+        func.coalesce(func.sum(TripExpenseAlias.te_amount), 0.0).label("t_expense")
+    ).outerjoin(
+        TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
+    ).outerjoin(
+        TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+    ).filter(
+        models.Trip.t_organization_id == org_id
+    ).group_by(
+        models.Trip.id
+    ).order_by(
+        models.Trip.t_created_at.desc()
     ).all()
+    trips = []
+    for trip, t_income, t_expense in trips_data:
+        trip.t_income = t_income
+        trip.t_expense = t_expense
+        trips.append(trip)
+   
     if state == "new":
         trips = [trip for trip in trips if trip.t_status == "PENDING" or trip.t_status == "Pending"]
     elif state == "pending-approval":
