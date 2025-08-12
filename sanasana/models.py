@@ -374,9 +374,9 @@ class Fuel_request(db.Model):
 
     f_status = db.Column(db.String, default='PENDING', nullable=False)
     f_type = db.Column(db.String, nullable=True)
-    f_litres = db.Column(db.Float, nullable=False)
+    f_litres = db.Column(db.Float, nullable=True)
     f_cost = db.Column(db.Float, nullable=True)
-    f_total_cost = db.Column(db.Float, nullable=False)
+    f_total_cost = db.Column(db.Float, nullable=True)
     f_distance = db.Column(db.String, nullable=True)
     f_vendor = db.Column(db.String, nullable=True)
     f_odometer_image = db.Column(db.String(200), nullable=True)
@@ -384,6 +384,8 @@ class Fuel_request(db.Model):
     f_receipt_image = db.Column(db.String(200), nullable=True)
     f_receipt_pdf = db.Column(db.String(200), nullable=True)
     f_request_type = db.Column(db.String(200), default="original", nullable=True)
+    f_estimated_litres = db.Column(db.Float, nullable=True)
+    f_estimated_cost = db.Column(db.Float, nullable=True)
 
     operator = db.relationship('Operator', backref='fuel_request')
     asset = db.relationship('Asset', backref='fuel_request')
