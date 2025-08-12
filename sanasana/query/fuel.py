@@ -26,6 +26,11 @@ def add(data):
     return fuel_request
 
 
+def get_fuel_request_by_trip(trip_id):
+    fuel_request = Fuel_request.query.filter_by(f_trip_id=trip_id).first()
+    return fuel_request
+
+
 def get_fuel_cost_sum_by_org(org_id):
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     sum_of_values = (
