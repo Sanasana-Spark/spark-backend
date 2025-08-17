@@ -457,6 +457,7 @@ class TripIncome(db.Model):
     ti_receipt_pdf = db.Column(db.String(200), nullable=True)
 
     ti_balance = db.Column(db.Float, nullable=True)
+    ti_paid_amount = db.Column(db.Float, nullable=True)
     ti_payment_method = db.Column(db.String(200), nullable=True)
     ti_payment_date = db.Column(db.DateTime, nullable=True)
     ti_payment_status = db.Column(db.String(200), nullable=True)
