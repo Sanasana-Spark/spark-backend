@@ -402,6 +402,14 @@ class TripExpenseByAsset(Resource):
         return jsonify(trip_expense=trip_expense)
 
 
+class TripLocation(Resource):
+    def get(self, org_id, user_id, trip_id):
+        """ Get trip location by id """
+        trip_locations = qtrip.get_trip_location_by_id(trip_id)
+        trip_locations = [location.as_dict() for location in trip_locations] if trip_locations else []
+        return jsonify(trip_locations=trip_locations)
+
+
 api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByOrgOperator, '/operator/<org_id>/<user_id>/')
 api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
@@ -415,6 +423,7 @@ api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripIncomeByAsset, '/asset_income/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(TripExpenseByAsset, '/asset_expense/<org_id>/<user_id>/<asset_id>/')
+api_trips.add_resource(TripLocation, '/location/<org_id>/<user_id>/<trip_id>/')
 
 
 def get_trip_column(trip_id, column_name):
