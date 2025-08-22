@@ -264,3 +264,10 @@ def add_trip_expense(data):
     return trip_expense
 
 
+def get_trip_location_by_id(trip_id):
+    trip = models.Odometer_readings.query.filter_by(
+        or_trip_id=trip_id
+    ).order_by(models.Odometer_readings.id.desc()).all()
+    if not trip:
+        return None
+    return trip
