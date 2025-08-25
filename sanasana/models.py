@@ -542,3 +542,37 @@ class Maintenance(db.Model):
         result = {column.name: getattr(self, column.name) for column in self.__table__.columns}
         result['m_asset_license'] = self.asset.a_license_plate if self.asset else None
         return result
+
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    __table_args__ = {"schema": "users"}  # assuming notifications belong to users schema
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    created_date = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    created_by = db.Column(db.String, db.ForeignKey("users.users.id"), nullable=True)
+    message = db.Column(db.Text, nullable=False)
+
+    recipient_email = db.Column(db.String(200), nullable=True)
+    recipient_user_id = db.Column(db.String, db.ForeignKey("users.users.id"), nullable=True)
+
+    type = db.Column(db.String(100), nullable=False)      # e.g., info, warning, engagement, system
+    category = db.Column(db.String(100), nullable=False)  # e.g., billing, account, trip-engagement
+
+    emailed = db.Column(db.Boolean, default=False, nullable=False)
+    smsed = db.Column(db.Boolean, default=False, nullable=False)
+
+    emailed_date = db.Column(db.DateTime, nullable=True)
+    smsed_date = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    recipient_user = db.relationship("User", foreign_keys=[recipient_user_id], backref="notifications_received")
+    creator = db.relationship("User", foreign_keys=[created_by], backref="notifications_created")
+
+    def __repr__(self):
+        return f"<Notification {self.id} - {self.type or 'general'}>"
+
+    def as_dict(self):
+        return {
+            column.name: getattr(self, column.name) for column in self.__table__.columns
+        }
