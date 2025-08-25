@@ -188,3 +188,5 @@ def get_fuel_price(org_id, f_type):
     else:
         fuel_price = diesel_price
     return fuel_price if fuel_price else None
+
+
