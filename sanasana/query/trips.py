@@ -238,6 +238,17 @@ def add_odometer_reading(data):
     db.session.commit()
     return odometer_reading
 
+def add_drivers_location(data):
+    drivers_location = models.Odometer_readings()
+    for key, value in data.items():
+        if not hasattr(drivers_location, key):
+            raise ValueError(f"Invalid attribute '{key}' for DriversLocation model")
+        setattr(drivers_location, key, value)
+
+    db.session.add(drivers_location)
+    db.session.commit()
+    return drivers_location
+
 
 def add_trip_income(data):
     trip_income = models.TripIncome()

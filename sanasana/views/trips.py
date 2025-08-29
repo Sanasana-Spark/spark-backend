@@ -204,6 +204,23 @@ class TripById(Resource):
             return jsonify(trip.as_dict())
 
 
+class TripLocationByPhone(Resource):
+    def post(self, org_id, user_id, trip_id):
+        request_data = request.json
+        data = {
+            "or_created_by": user_id,
+            "or_organization_id": org_id,
+            "or_trip_id": request_data["or_trip_id"],
+            "or_asset_id": request_data["or_asset_id"],
+            "or_operator_id": request_data["or_operator_id"],
+            "or_latitude": request_data["or_latitude"],
+            "or_longitude": request_data["or_longitude"],
+            "or_description": request_data["or_description"]
+        }
+        qtrip.add_drivers_location(data)
+    
+
+
 class OdometerReading(Resource):  
     def post(self, org_id, user_id):
         """ Add odometer reading """
@@ -416,6 +433,7 @@ api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
 api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
 api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
 api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
+api_trips.add_resource(TripLocationByPhone, '/location_phone/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
 api_trips.add_resource(Trip_Original_Fuel_Request, '/fuel_request/<org_id>/<user_id>/<trip_id>/')
 api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
