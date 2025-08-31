@@ -564,6 +564,7 @@ class Notification(db.Model):
 
     emailed_date = db.Column(db.DateTime, nullable=True)
     smsed_date = db.Column(db.DateTime, nullable=True)
+    read = db.Column(db.Boolean, default=False, nullable=False)
 
     # Relationships
     recipient_user = db.relationship("User", foreign_keys=[recipient_user_id], backref="notifications_received")
