@@ -42,6 +42,15 @@ class NotificationsByUser(Resource):
         notifications = [notification.as_dict() for notification in notifications]
         return jsonify(notifications=notifications)
 
+    def post(self, user_id):
+        """ Create a new notification for a specific user """
+        data = request.json
+        if not data:
+            abort(400, 'No input data provided')
+
+        notification = qnotifications.create_notification(user_id, **data)
+        return jsonify(notification.as_dict())
+
 
 class UpdateNotificationStatus(Resource):
     def post(self, user_id):
