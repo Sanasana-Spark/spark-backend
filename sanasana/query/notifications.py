@@ -116,3 +116,10 @@ def mark_notification_as_unread(notification_id):
         db.session.commit()
         return True
     return False
+
+
+def create_notification(user_id, **kwargs):
+    notification = models.Notification(created_by=user_id, **kwargs)
+    db.session.add(notification)
+    db.session.commit()
+    return notification
