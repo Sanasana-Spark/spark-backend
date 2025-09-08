@@ -22,16 +22,42 @@ class AutoReminderNotifications(Resource):
         # use user_id to check permission once implemented properly
         #temporary
         # qnotifications.delete_all_notifications()
+        # qnotifications.email_notifications()
         notifications = qnotifications.get_all_auto_reminder_notifications()
         notifications = [notification.as_dict() for notification in notifications]
         return jsonify(notifications=notifications)
+    
+    def put(self, user_id):
+        """ Delete all auto reminder notifications """
+        # use user_id to check permission once implemented properly
+        qnotifications.delete_all_notifications()
+        return jsonify(success=True)
 
     def post(self, user_id):
         """ Create an auto reminder notification """
-        # use user_id to check permission once implemented properly
-        notifications = qnotifications.check_inactive_fleets()
-        notifications = [notification.as_dict() for notification in notifications]
-        return jsonify(notifications=notifications)
+        # # use user_id to check permission once implemented properly
+        # qnotifications.delete_all_notifications()
+        notification_type = request.json.get('type', 'All')
+        if notification_type not in ['All', 'InactiveFleets', 'Maintenance', 'Insurance', 'License']:
+            abort(400, 'Invalid notification type')
+        if notification_type == 'All':
+            qnotifications.check_inactive_fleets()
+            qnotifications.create_maintenance_notifications()
+            qnotifications.create_insurance_notifications()
+            qnotifications.create_license_notifications()
+        elif notification_type == 'InactiveFleets':
+            notifications = qnotifications.check_inactive_fleets()
+            return jsonify(notifications=[n.as_dict() for n in notifications])
+        elif notification_type == 'Maintenance':
+            notifications = qnotifications.create_maintenance_notifications()
+            return jsonify(notifications=[n.as_dict() for n in notifications])
+        elif notification_type == 'Insurance':
+            notifications = qnotifications.create_insurance_notifications()
+            return jsonify(notifications=[n.as_dict() for n in notifications])
+        elif notification_type == 'License':
+            notifications = qnotifications.create_license_notifications()
+            return jsonify(notifications=[n.as_dict() for n in notifications])
+        return jsonify(success=True)
 
 
 class NotificationsByUser(Resource):
