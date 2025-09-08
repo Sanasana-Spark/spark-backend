@@ -551,6 +551,7 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     created_date = db.Column(db.DateTime, nullable=False, server_default=func.now())
     created_by = db.Column(db.String, db.ForeignKey("users.users.id"), nullable=True)
+    organisation_id = db.Column(db.String, db.ForeignKey("users.organization.id"), nullable=True)
     message = db.Column(db.Text, nullable=False)
 
     recipient_email = db.Column(db.String(200), nullable=True)
@@ -559,7 +560,9 @@ class Notification(db.Model):
     type = db.Column(db.String(100), nullable=False)      # e.g., info, warning, engagement, system
     category = db.Column(db.String(100), nullable=False)  # e.g., billing, account, trip-engagement
 
+    to_be_emailed = db.Column(db.Boolean, default=False, nullable=False)
     emailed = db.Column(db.Boolean, default=False, nullable=False)
+    to_be_smsed = db.Column(db.Boolean, default=False, nullable=False)
     smsed = db.Column(db.Boolean, default=False, nullable=False)
 
     emailed_date = db.Column(db.DateTime, nullable=True)
