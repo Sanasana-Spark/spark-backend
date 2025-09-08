@@ -20,18 +20,16 @@ class AutoReminderNotifications(Resource):
     def get(self, user_id):
         """ Get all auto reminder notifications """
         # use user_id to check permission once implemented properly
-        #temporary
-        # qnotifications.delete_all_notifications()
         # qnotifications.email_notifications()
         notifications = qnotifications.get_all_auto_reminder_notifications()
         notifications = [notification.as_dict() for notification in notifications]
         return jsonify(notifications=notifications)
     
-    def put(self, user_id):
-        """ Delete all auto reminder notifications """
-        # use user_id to check permission once implemented properly
-        qnotifications.delete_all_notifications()
-        return jsonify(success=True)
+    # def put(self, user_id):
+    #     """ Delete all auto reminder notifications """
+    #     # use user_id to check permission once implemented properly
+    #     qnotifications.delete_all_notifications()
+    #     return jsonify(success=True)
 
     def post(self, user_id):
         """ Create an auto reminder notification """
@@ -97,6 +95,14 @@ class UpdateNotificationStatus(Resource):
         return jsonify(success=True)
 
 
+class EmailNotifications(Resource):
+    def post(self, admin_user_id):
+        """ Trigger sending email notifications """
+        qnotifications.email_notifications()
+        return jsonify(success=True)
+
+
 api_notifications.add_resource(AutoReminderNotifications, '/<user_id>/auto-reminder/')
 api_notifications.add_resource(NotificationsByUser, '/<user_id>/')
 api_notifications.add_resource(UpdateNotificationStatus, '/<user_id>/update-status/')
+api_notifications.add_resource(EmailNotifications, '/<admin_user_id>/send-emails/')
