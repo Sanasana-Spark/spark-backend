@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, g
 )
 from werkzeug.utils import secure_filename
 import os
@@ -17,7 +17,8 @@ api_summaries = Api(bp)
 
 
 class DashboardSummary(Resource):
-    def get(self, org_id):
+    def get(self):
+        org_id = g.current_user.organization_id
         totalAssets = qasset.get_asset_count_by_org(org_id)
         totalOperators = qoperator.get_operator_count_by_org(org_id)
         totalTrips = qtrip.get_recent_trips_count_by_org(org_id)
@@ -35,4 +36,4 @@ class DashboardSummary(Resource):
         return response, 200
 
 
-api_summaries.add_resource(DashboardSummary, '/<org_id>/')
+api_summaries.add_resource(DashboardSummary, '/')

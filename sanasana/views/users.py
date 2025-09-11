@@ -12,6 +12,7 @@ from sanasana.query import users as qusers
 from sanasana.query import send_email as qsend_email
 from sanasana.query import resources as qresources
 import logging
+from sanasana.query.user_management import role_required, permission_required
 
 
 bp = Blueprint('organizations', __name__, url_prefix='/organizations')
@@ -150,6 +151,7 @@ class UserOrg(Resource):
 
 
 class UsersByOrg(Resource):
+    @role_required("admin")
     def get(self, org_id, admin_id):
         """ get users by id """
         users = [users.as_dict() for users in 
