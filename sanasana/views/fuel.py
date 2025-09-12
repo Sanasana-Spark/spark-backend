@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, g
 )
 from werkzeug.utils import secure_filename
 import os
@@ -21,22 +21,22 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 
 class AllFuelRequest(Resource):
-    def get(self, org_id, user_id):
-        data = [fuel_request.as_dict() for fuel_request in qfuel_request.get_fuel_request_by_org(org_id)]
+    def get(self):
+        data = [fuel_request.as_dict() for fuel_request in qfuel_request.get_fuel_request_by_org(g.current_user.organization_id)]
         return jsonify(data)
 
 
 class FuelRequest(Resource):
-    def post(self, org_id, user_id, trip_id):
+    def post(self, trip_id):
         data = request.get_json()
         trip = qtrip.get_trip_by_id(trip_id).as_dict()
 
-        cost_per_litre = qfuel_request.get_fuel_price(org_id, trip['a_fuel_type'])
+        cost_per_litre = qfuel_request.get_fuel_price(g.current_user.organization_id, trip['a_fuel_type'])
         estimated_litres, estimated_cost = qfuel_request.calculate_f_litres(
-            org_id, trip_id)
+            g.current_user.organization_id, trip_id)
         request_data = {
-            "f_created_by": user_id, 
-            "f_organization_id": org_id,
+            "f_created_by": g.current_user.id,
+            "f_organization_id": g.current_user.organization_id,
             "f_trip_id": trip_id,
             "f_asset_id": trip['t_asset_id'],
             "f_operator_id": trip['t_operator_id'],
@@ -72,6 +72,6 @@ class CarbonEmissionCalculator(Resource):
         return jsonify({"t_carbon_emission": t_carbon_emission})
 
 
-api_fuel.add_resource(AllFuelRequest, '/<org_id>/<user_id>/')
-api_fuel.add_resource(FuelRequest, '/<org_id>/<user_id>/<trip_id>/')
+api_fuel.add_resource(AllFuelRequest, '/')
+api_fuel.add_resource(FuelRequest, '/<trip_id>/')
 api_fuel.add_resource(CarbonEmissionCalculator, '/carbon-emission-calculator/')

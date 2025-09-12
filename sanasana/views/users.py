@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request, current_app
+    Blueprint,  jsonify, request, current_app, g
 )
 from flask_mail import Message
 from flask_restful import Api, Resource
@@ -63,10 +63,14 @@ class AllOrg(Resource):
         return jsonify(org.as_dict())
 
 
-class EditOrg(Resource):
-    def put(self, org_id, admin_id):
-        user_id = admin_id
-        org = Organization.query.filter_by(id=org_id).first()
+class Org(Resource):
+    def get(self):
+        Organizations = Organization.query.filter_by(id=g.current_user.organization_id).all()
+        Organizations_list = [Organization.as_dict() for Organization in Organizations]
+        return jsonify(Organizations_list)
+
+    def put(self):
+        org = Organization.query.filter_by(id=g.current_user.organization_id).first()
         if not org:
             return jsonify({'error': 'Organization not found'}), 404
         request_data = request.json
@@ -97,33 +101,10 @@ class EditOrg(Resource):
             org.org_phone = request_data['org_phone']
         if 'org_logo_url' in request_data:
             org_logo = request_data['org_logo']
-            org.org_logo = qresources.save_logo(org_logo, org_id)
+            org.org_logo = qresources.save_logo(org_logo, g.current_user.organization_id)
         db.session.commit()
 
         return jsonify({'message': 'Organization updated successfully'})
-
-
-class Org(Resource):
-    def get(self, org_id):
-        Organizations = Organization.query.filter_by(id=org_id).all()
-        Organizations_list = [Organization.as_dict() for Organization in Organizations]
-        return jsonify(Organizations_list)
-    
-    def post(self, org_id):
-        # with current_app.app_context():
-        msg = Message(
-            subject='Hello from the other side!', 
-            sender='info@sanasanasustainability.com',  # Ensure this matches MAIL_USERNAME
-            recipients=['muthonimuriuki22@gmail.com']  # Replace with actual recipient's email
-        )
-        msg.body = "Hey, sending you this email from my Flask app, let me know if it works."
-        mail.send(msg)
-        return "Message sent!"
-
-        message_recipient = "muthonimuriuki22@gmail.com"
-        message_subject = "Testing emailing"
-        message_body = f"You have been invited to sanasana by org {org_id}"
-        qsend_email.send_async_email(message_recipient, message_subject, message_body)
 
 
 class UserOrg(Resource):
@@ -210,7 +191,7 @@ class UserById(Resource):
 
 
 class UpdateUser(Resource):
-    def put(self, org_id, email):
+    def put(self, email):
         data = request.json
         email = data.get('email')
         id = data.get('id')
@@ -219,7 +200,7 @@ class UpdateUser(Resource):
         if not email or not username:
             return jsonify({'error': 'Email and username are required'}), 400
 
-        user = User.query.filter_by(email=email, organization_id=org_id).first()
+        user = User.query.filter_by(email=email, organization_id=g.current_user.organization_id).first()
 
         if not user:
             return jsonify({'error': 'User does not have invite'})
@@ -232,14 +213,14 @@ class UpdateUser(Resource):
 
 
 class EditUser(Resource):
-    def put(self, org_id, admin_id):
+    def put(self):
         data = request.json
         id = data.get('id')
         role = data.get('role')
         phone = data.get('phone')
         status = data.get('status')
 
-        user = User.query.filter_by(id=id, organization_id=org_id).first()
+        user = User.query.filter_by(id=id, organization_id=g.current_user.organization_id).first()
         user.role = role
         user.phone = phone
         user.status = status
@@ -253,11 +234,10 @@ class SendEmail(Resource):
         return "Email sent successfully!"
 
 
-api_users.add_resource(AllOrg, '/')
-api_users.add_resource(EditOrg, '/<org_id>/<admin_id>/')
-api_users.add_resource(Org, '/<org_id>/')
+api_users.add_resource(AllOrg, '/all/')
+api_users.add_resource(Org, '/')
 api_users.add_resource(UserOrg, '/user_org/')
-api_users.add_resource(UsersByOrg, '/users/<org_id>/<admin_id>/')
-api_users.add_resource(EditUser, '/edituser/<org_id>/<admin_id>/')
-api_users.add_resource(UpdateUser, '/update_user/<org_id>/<email>')
+api_users.add_resource(UsersByOrg, '/users/')
+api_users.add_resource(EditUser, '/edituser/')
+api_users.add_resource(UpdateUser, '/update_user/<email>')
 api_users.add_resource(SendEmail, '/mail/')
