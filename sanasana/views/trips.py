@@ -1,6 +1,6 @@
 import datetime
 from flask import (
-    Blueprint,  jsonify, request, abort
+    Blueprint,  jsonify, request, abort, g
 )
 from werkzeug.utils import secure_filename
 import os
@@ -26,8 +26,9 @@ api_trips = Api(bp)
 
 
 class TripsByOrg(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         """ list all trips """
+        org_id = g.current_user.organization_id
         state = request.args.get('state', None) # new or pending-approval or completed
         if state not in ["new", "pending-approval", "completed", None]:
             return abort(400, description="Invalid state. Use 'new', 'pending-approval', 'completed' or leave empty for all trips.")
@@ -38,13 +39,13 @@ class TripsByOrg(Resource):
             trips = [trip.as_dict() for trip in qtrip.get_specific_trips(state, org_id)]
             return jsonify(trips)
     
-    def post(self, org_id, user_id):
+    def post(self):
         """ Add an trip """
         request_data = request.get_json()
 
         data = {
-            "t_created_by": user_id,
-            "t_organization_id": org_id,
+            "t_created_by": g.current_user.id,
+            "t_organization_id": g.current_user.organization_id,
             "t_type": request_data["t_type"],
             "t_start_lat": request_data["t_start_lat"],
             "t_start_long": request_data["t_start_long"],
@@ -79,17 +80,19 @@ class TripsByOrg(Resource):
     
     
 class TripsByOrgOperator(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         """ list all trips """
         state = request.args.get('state', "current") # new or current or completed
         if state not in ["current", "completed", "new"]:
             return abort(400, description="Invalid state. Use 'current' or 'completed' or 'new'.")
-        trips = [trip.as_dict() for trip in qtrip.get_driver_specific_trips(state, org_id, user_id)]
+        trips = [trip.as_dict() for trip in qtrip.get_driver_specific_trips(
+            state, g.current_user.organization_id, g.current_user.id
+            )]
         return jsonify(trips)
 
 
 class TripsByAsset(Resource):
-    def get(self, org_id, user_id, asset_id):
+    def get(self, asset_id):
         """ list all trips """
         # trips = models.Trip.query.filter_by(t_organization_id=org_id,
         #                                     t_asset_id=asset_id).all()
@@ -104,7 +107,7 @@ class TripsByAsset(Resource):
             TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
         ).outerjoin(
             TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
-        ).filter(models.Trip.t_organization_id==org_id,models.Trip.t_asset_id==asset_id
+        ).filter(models.Trip.t_organization_id==g.current_user.organization_id,models.Trip.t_asset_id==asset_id
         ).group_by(
             models.Trip.id
         ).order_by(
@@ -122,7 +125,7 @@ class TripsByAsset(Resource):
 
 
 class TripsByUser(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         """ list all trips """
         # trips = models.Trip.query.filter_by(t_organization_id=org_id,
         #                                     user_id=user_id).all()
@@ -131,7 +134,7 @@ class TripsByUser(Resource):
             models.Trip.query
             .join(models.Operator, models.Trip.t_operator_id == models.Operator.id)  # Join Operator table
             .join(models.User, models.User.email == models.Operator.o_email)  # Join User table through email
-            .filter(models.User.id == user_id, models.Trip.t_organization_id == org_id)  # Apply filters
+            .filter(models.User.id == g.current_user.id, models.Trip.t_organization_id == g.current_user.organization_id)  # Apply filters
             .order_by(models.Trip.t_created_at.desc())
             .all() 
         )
@@ -141,29 +144,29 @@ class TripsByUser(Resource):
 
 
 class TripByStatus(Resource):
-    def get(self, org_id, user_id, t_status):
+    def get(self, t_status):
         """ list all trips """
         trips = [trips.as_dict() for trips in
-                 qtrip.get_trip_by_status(org_id, t_status)]
+                 qtrip.get_trip_by_status(g.current_user.organization_id, t_status)]
         return jsonify(trips)
 
 
 class TripById(Resource):
-    def get(self, org_id, user_id, trip_id):
+    def get(self, trip_id):
         """ get trip by id """
         if trip_id is None:
             return abort(404)
         trip = qtrip.get_trip_by_id(trip_id).as_dict()    
         return jsonify(trip)
-    
-    def post(self, org_id, user_id, trip_id):
+
+    def post(self, trip_id):
         request_data = request.json
         or_image_data = request_data['or_image']
         or_trip_id = trip_id
         or_image_url = qresources.save_image(or_image_data, or_trip_id)
         data = {
-            "or_created_by": user_id,
-            "or_organization_id": org_id,
+            "or_created_by": g.current_user.id,
+            "or_organization_id": g.current_user.organization_id,
             "or_trip_id": request_data["or_trip_id"],
             "or_asset_id": request_data["or_asset_id"],
             "or_operator_id": request_data["or_operator_id"],
@@ -205,11 +208,11 @@ class TripById(Resource):
 
 
 class TripLocationByPhone(Resource):
-    def post(self, org_id, user_id, trip_id):
+    def post(self, trip_id):
         request_data = request.json
         data = {
-            "or_created_by": user_id,
-            "or_organization_id": org_id,
+            "or_created_by": g.current_user.id,
+            "or_organization_id": g.current_user.organization_id,
             "or_trip_id": request_data["or_trip_id"],
             "or_asset_id": request_data["or_asset_id"],
             "or_operator_id": request_data["or_operator_id"],
@@ -217,21 +220,20 @@ class TripLocationByPhone(Resource):
             "or_longitude": request_data["or_longitude"],
             "or_description": request_data["or_description"]
         }
-        qtrip.add_drivers_location(data)
-    
+        qtrip.add_drivers_location(data) 
 
 
 class OdometerReading(Resource):  
-    def post(self, org_id, user_id):
+    def post(self):
         """ Add odometer reading """
         request_data = request.get_json()
         or_image_data = request_data['or_image']
         or_trip_id = request_data["or_trip_id"]
-
+        org_id = g.current_user.organization_id
         or_image_url = qresources.save_image(or_image_data, or_trip_id)
 
         data = {
-            "or_created_by": user_id,
+            "or_created_by": g.current_user.id,
             "or_organization_id": org_id,
             "or_trip_id": request_data["or_trip_id"],
             "or_asset_id": request_data["or_asset_id"],
@@ -250,7 +252,7 @@ class OdometerReading(Resource):
 
 
 class Trip_Original_Fuel_Request(Resource):
-    def get(self, org_id, user_id, trip_id):
+    def get(self, trip_id):
         """ Get original fuel request by trip id """
         fuel_request = qfuel_request.get_fuel_request_by_trip(trip_id)
         if not fuel_request:
@@ -258,9 +260,9 @@ class Trip_Original_Fuel_Request(Resource):
         return jsonify(fuel_request.as_dict())
 
 
-class Approve_Request(Resource):  
-    def post(self, org_id, user_id):
-        user_org = models.Organization.query.filter_by(id=org_id).first()
+class Approve_Request(Resource):
+    def post(self):
+        user_org = models.Organization.query.filter_by(id=g.current_user.organization_id).first()
         request_data = request.json
         t_id = request_data['t_id']
         fuel_type = request_data['a_fuel_type']
@@ -297,8 +299,8 @@ class Approve_Request(Resource):
             db.session.commit()
 
             expense_data = {
-                "te_created_by": user_id,
-                "te_organization_id": org_id,
+                "te_created_by": g.current_user.id,
+                "te_organization_id": g.current_user.organization_id,
                 "te_trip_id": t_id,
                 "te_asset_id": trip.t_asset_id,
                 "te_operator_id": trip.t_operator_id,
@@ -310,19 +312,19 @@ class Approve_Request(Resource):
 
 
 class Trip_income(Resource):
-    def get(self, org_id, user_id, trip_id):
+    def get(self, trip_id):
         income = models.TripIncome.query.filter_by(
-            ti_organization_id=org_id, ti_trip_id=trip_id).order_by(
+            ti_organization_id=g.current_user.organization_id, ti_trip_id=trip_id).order_by(
                 models.TripIncome.id.desc()).all()
         income_list = [income.as_dict() for income in income]
         return jsonify(income_list)
- 
-    def post(self, org_id, user_id, trip_id):
+
+    def post(self, trip_id):
         """ Add trip income """
         request_data = request.get_json()
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_trip_id": trip_id,
             "ti_asset_id": request_data["ti_asset_id"],
             "ti_operator_id": request_data["ti_operator_id"],
@@ -339,20 +341,20 @@ class Trip_income(Resource):
 
 
 class TripIncomeByAsset(Resource):
-    def get(self, org_id, user_id, asset_id):
+    def get(self, asset_id):
         income = models.TripIncome.query.filter_by(
-            ti_organization_id=org_id,
+            ti_organization_id=g.current_user.organization_id,
             ti_asset_id=asset_id
         ).order_by(models.TripIncome.id.desc()).all()
         income_list = [income.as_dict() for income in income]
         return jsonify(income_list)
-    
-    def post(self, org_id, user_id, asset_id):
+
+    def post(self, asset_id):
         """ Add trip income by asset """
         request_data = request.get_json()
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_asset_id": asset_id,
             "ti_operator_id": request_data["ti_operator_id"],
             "ti_client_id": request_data["ti_client_id"],
@@ -367,20 +369,20 @@ class TripIncomeByAsset(Resource):
 
 
 class TripExpense(Resource):
-    def get(self, org_id, user_id, trip_id):
+    def get(self, trip_id):
         expense = models.TripExpense.query.filter_by(
-            te_organization_id=org_id, te_trip_id=trip_id).order_by(
+            te_organization_id=g.current_user.organization_id, te_trip_id=trip_id).order_by(
                 models.TripExpense.id.desc()
             ).all()
         expense_list = [expense.as_dict() for expense in expense]
         return jsonify(expense_list)
- 
-    def post(self, org_id, user_id, trip_id):
+
+    def post(self, trip_id):
         """ Add trip income """
         request_data = request.get_json()
         data = {
-            "te_created_by": user_id,
-            "te_organization_id": org_id,
+            "te_created_by": g.current_user.id,
+            "te_organization_id": g.current_user.organization_id,
             "te_trip_id": trip_id,
             "te_asset_id": request_data["te_asset_id"],
             "te_operator_id": request_data["te_operator_id"],
@@ -394,20 +396,20 @@ class TripExpense(Resource):
 
 
 class TripExpenseByAsset(Resource):
-    def get(self, org_id, user_id, asset_id):
+    def get(self, asset_id):
         expense = models.TripExpense.query.filter_by(
-            te_organization_id=org_id,
+            te_organization_id=g.current_user.organization_id,
             te_asset_id=asset_id
         ).order_by(models.TripExpense.id.desc()).all()
         expense_list = [expense.as_dict() for expense in expense]
         return jsonify(expense_list)
-    
-    def post(self, org_id, user_id, asset_id):
+
+    def post(self, asset_id):
         """ Add trip income by asset """
         request_data = request.get_json()
         data = {
-            "te_created_by": user_id,
-            "te_organization_id": org_id,
+            "te_created_by": g.current_user.id,
+            "te_organization_id": g.current_user.organization_id,
             "te_asset_id": asset_id,
             "te_operator_id": request_data["te_operator_id"],
             "te_type": request_data["te_type"],
@@ -420,115 +422,25 @@ class TripExpenseByAsset(Resource):
 
 
 class TripLocation(Resource):
-    def get(self, org_id, user_id, trip_id):
+    def get(self, trip_id):
         """ Get trip location by id """
         trip_locations = qtrip.get_trip_location_by_id(trip_id)
         trip_locations = [location.as_dict() for location in trip_locations] if trip_locations else []
         return jsonify(trip_locations=trip_locations)
 
 
-api_trips.add_resource(TripsByOrg, '/<org_id>/<user_id>/')
-api_trips.add_resource(TripsByOrgOperator, '/operator/<org_id>/<user_id>/')
-api_trips.add_resource(TripsByAsset, '/by_asset/<org_id>/<user_id>/<asset_id>/')
-api_trips.add_resource(TripsByUser, '/by_user/<org_id>/<user_id>/')
-api_trips.add_resource(TripByStatus, '/status/<org_id>/<user_id>/<t_status>/')
-api_trips.add_resource(TripById, '/<org_id>/<user_id>/<trip_id>/')
-api_trips.add_resource(TripLocationByPhone, '/location_phone/<org_id>/<user_id>/<trip_id>/')
-api_trips.add_resource(OdometerReading, '/odometer/<org_id>/<user_id>/')
-api_trips.add_resource(Trip_Original_Fuel_Request, '/fuel_request/<org_id>/<user_id>/<trip_id>/')
-api_trips.add_resource(Approve_Request, '/approve_request/<org_id>/<user_id>/')
-api_trips.add_resource(Trip_income, '/income/<org_id>/<user_id>/<trip_id>/')
-api_trips.add_resource(TripIncomeByAsset, '/asset_income/<org_id>/<user_id>/<asset_id>/')
-api_trips.add_resource(TripExpense, '/expense/<org_id>/<user_id>/<trip_id>/')
-api_trips.add_resource(TripExpenseByAsset, '/asset_expense/<org_id>/<user_id>/<asset_id>/')
-api_trips.add_resource(TripLocation, '/location/<org_id>/<user_id>/<trip_id>/')
-
-
-def get_trip_column(trip_id, column_name):
-    trip = models.Trip.query.get(trip_id)
-    return getattr(trip, column_name, None) if trip else None
-
-
-@bp.route('/status')
-def get_trip_status():
-    trip_status = Tstatus.query.all()
-    status_list = [status.as_dict() for status in trip_status]
-    return jsonify(status_list)
-
-
-@bp.route('/create', methods=['POST'])
-def add_trip():
-    try:
-        data = request.json
-        required_fields = ['t_organization_id', 't_created_by']
-        data = {k.strip().lower(): v for k, v in data.items()}
-        required_fields_normalized = [field.lower() for field in required_fields]
-        missing_fields = [field for field in required_fields_normalized if field not in data]
-
-        if missing_fields:
-            return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
-
-        new_trip = Trip(
-            t_organization_id=data.get('t_organization_id'),
-            t_created_by=data.get('t_created_by'),
-            t_type=data.get('t_type'),
-            t_start_lat=data.get('t_start_lat'),
-            t_start_long=data.get('t_start_long'),
-            t_start_elavation=data.get('t_start_elavation'),
-            t_end_lat=data.get('t_end_lat'),
-            t_end_long=data.get('t_end_long'),
-            t_end_elavation=data.get('t_end_elavation'),
-            t_start_date=data.get('t_start_date'),
-            t_end_date=data.get('t_end_date'),
-            t_operator_id=data.get('t_operator_id'),
-            t_asset_id=data.get('t_asset_id'),
-            t_status=data.get('t_status'),
-            t_load=data.get('t_load'),
-            t_origin_place_id=data.get('t_origin_place_id'),
-            t_origin_place_query=data.get('t_origin_place_query'),
-            t_destination_place_id=data.get('t_destination_place_id'),
-            t_destination_place_query=data.get('t_destination_place_query'),
-            # t_directionsResponse=data.get('t_directionsResponse'),      
-            t_distance=data.get('t_distance') if 't_distance' in data else None,
-            t_duration=data.get('t_duration'),
-
-        )
-
-        db.session.add(new_trip)
-        db.session.commit()
-
-        return jsonify(new_trip.as_dict()), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-
-# @bp.route('/<int:trip_id>', methods=['PUT'])
-# def update_trip(trip_id):
-#     trip = get_trip_by_id(trip_id)
-#     if not trip:
-#         return jsonify({'error': 'Trip not found'}), 404
-#     try:
-#         data = request.get_json()
-#         # Loop through each attribute and value in the JSON data
-#         for attribute, value in data.items():
-#             if hasattr(trip, attribute):
-#                 setattr(trip, attribute, value)
-#             else:
-#                 return jsonify({'error': f'Invalid attribute: {attribute}'}), 400
-#         db.session.commit()
-#         return jsonify({'message': 'Trip updated successfully'}), 200
-#     except Exception as e:
-#         db.session.rollback()  # Rollback in case of any errors
-#         return jsonify({'error': 'Failed to update trip' + str(e)}), 500
-    
-
-
-@bp.route('/distance')
-def calculate_distance():
-    return 1
-
-
-@bp.route('/fuel')
-def calculate_fuel():
-    return 1
+api_trips.add_resource(TripsByOrg, '/')
+api_trips.add_resource(TripsByOrgOperator, '/operator/')
+api_trips.add_resource(TripsByAsset, '/by_asset/')
+api_trips.add_resource(TripsByUser, '/by_user/')
+api_trips.add_resource(TripByStatus, '/status/')
+api_trips.add_resource(TripById, '/<trip_id>/')
+api_trips.add_resource(TripLocationByPhone, '/location_phone/<trip_id>/')
+api_trips.add_resource(OdometerReading, '/odometer/')
+api_trips.add_resource(Trip_Original_Fuel_Request, '/fuel_request/<trip_id>/')
+api_trips.add_resource(Approve_Request, '/approve_request/')
+api_trips.add_resource(Trip_income, '/income/<trip_id>/')
+api_trips.add_resource(TripIncomeByAsset, '/asset_income/<asset_id>/')
+api_trips.add_resource(TripExpense, '/expense/<trip_id>/')
+api_trips.add_resource(TripExpenseByAsset, '/asset_expense/<asset_id>/')
+api_trips.add_resource(TripLocation, '/location/<trip_id>/')

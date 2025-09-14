@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, g
 )
 from flask_restful import Api, Resource
 from sanasana import models
@@ -14,14 +14,14 @@ api_summaries = Api(bp)
 
 
 class TripListingReport(Resource):
-    def get(self, org_id):
+    def get(self):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         export = request.args.get('export', 'excel').lower()
 
         query = (
             models.Trip.query
-            .filter_by(t_organization_id=org_id)
+            .filter_by(t_organization_id=g.current_user.organization_id)
             .order_by(models.Trip.t_created_at.desc())
         )
 
@@ -107,10 +107,10 @@ class internal_customer_metrics(Resource):
 
 
 class AssetListingReport(Resource):
-    def get(self, org_id):
+    def get(self):
         export = request.args.get('export', 'excel').lower()
 
-        assets = models.Asset.query.filter_by(a_organisation_id=org_id).all()
+        assets = models.Asset.query.filter_by(a_organisation_id=g.current_user.organization_id).all()
         assets_list = [asset.as_dict() for asset in assets]
 
         if export == "excel":
@@ -128,12 +128,12 @@ class AssetListingReport(Resource):
         
 
 class NewAssetListingReport(Resource):
-    def get(self, org_id):
+    def get(self):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         export = request.args.get('export', 'excel').lower()
 
-        query = models.Asset.query.filter_by(a_organisation_id=org_id)
+        query = models.Asset.query.filter_by(a_organisation_id=g.current_user.organization_id)
 
         if start_date and end_date:
             query = query.filter(models.Asset.a_created_at.between(start_date, end_date))
@@ -156,13 +156,13 @@ class NewAssetListingReport(Resource):
 
 
 class FuelRequestReport(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         export = request.args.get('export', 'excel').lower()
 
-        user_org = models.Organization.query.filter_by(id=org_id).first()
-        fuel_expenses = qfuel_request.get_fuel_expenses_by_org(org_id, start_date, end_date)
+        user_org = models.Organization.query.filter_by(id=g.current_user.organization_id).first()
+        fuel_expenses = qfuel_request.get_fuel_expenses_by_org(g.current_user.organization_id, start_date, end_date)
 
         fuel_requests_list = [
             {
@@ -194,12 +194,12 @@ class FuelRequestReport(Resource):
         
 
 class MaintenanceListingReport(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         export = request.args.get('export', 'excel').lower()
 
-        maintenance_list = qreports.get_report(org_id, start_date, end_date)
+        maintenance_list = qreports.get_report(g.current_user.organization_id, start_date, end_date)
 
         if export == "excel":
             return export_to_excel(
@@ -216,10 +216,10 @@ class MaintenanceListingReport(Resource):
         
 
 class OperatorsListingReport(Resource):
-    def get(self, org_id):
+    def get(self):
         export = request.args.get('export', 'excel').lower()
 
-        operators = models.Operator.query.filter_by(o_organisation_id=org_id).all()
+        operators = models.Operator.query.filter_by(o_organisation_id=g.current_user.organization_id).all()
 
         operators_list = [
             {
@@ -263,12 +263,12 @@ class OperatorsListingReport(Resource):
 
         
 class NewOperatorsListingReport(Resource):
-    def get(self, org_id):
+    def get(sel):
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
         export = request.args.get('export', 'excel').lower()
 
-        query = models.Operator.query.filter_by(o_organisation_id=org_id)
+        query = models.Operator.query.filter_by(o_organisation_id=g.current_user.organization_id)
 
         if start_date and end_date:
             query = query.filter(
@@ -318,11 +318,11 @@ class NewOperatorsListingReport(Resource):
             )
 
 
-api_summaries.add_resource(TripListingReport, '/<org_id>/trip-listing/')
+api_summaries.add_resource(TripListingReport, '/trip-listing/')
 api_summaries.add_resource(internal_customer_metrics, '/internal-customer-metrics/')
-api_summaries.add_resource(AssetListingReport, '/<org_id>/asset-listing/')
-api_summaries.add_resource(NewAssetListingReport, '/<org_id>/new-asset-listing/')
-api_summaries.add_resource(FuelRequestReport, '/<org_id>/<user_id>/fuel-requests-expense/')
-api_summaries.add_resource(MaintenanceListingReport, '/<org_id>/<user_id>/maintenance-listing/')
-api_summaries.add_resource(OperatorsListingReport, '/<org_id>/operators-listing/')
-api_summaries.add_resource(NewOperatorsListingReport, '/<org_id>/new-operators-listing/')
+api_summaries.add_resource(AssetListingReport, '/asset-listing/')
+api_summaries.add_resource(NewAssetListingReport, '/new-asset-listing/')
+api_summaries.add_resource(FuelRequestReport, '/fuel-requests-expense/')
+api_summaries.add_resource(MaintenanceListingReport, '/maintenance-listing/')
+api_summaries.add_resource(OperatorsListingReport, '/operators-listing/')
+api_summaries.add_resource(NewOperatorsListingReport, '/new-operators-listing/')

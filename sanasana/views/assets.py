@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint,  jsonify, request
+    Blueprint,  jsonify, request, g
 )
 from flask_restful import Api, Resource
 from sqlalchemy import func, and_, cast, Numeric, Float
@@ -20,28 +20,18 @@ api_assets = Api(bp)
 
 
 class Assets(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
+        org_id = g.current_user.organization_id
         assets = [asset.as_dict() for asset in qasset.get_asset_by_org(org_id)]
         return jsonify(assets=assets)
-    
-    def post(self, org_id, user_id):
+
+    def post(self):
         data = request.get_json()
-        # files = request.files
-
-        # required_fields = [
-        #     "a_name", 'a_make', 'a_model', 'a_year', 'a_license_plate',
-        #      'a_fuel_type'
-        # ]
         data = {k.strip().lower(): v for k, v in data.items()}
-        # required_fields_normalized = [field.lower() for field in required_fields]
-        # missing_fields = [field for field in required_fields_normalized if field not in data]
-
-        # if missing_fields:
-        #     return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
 
         data = {
-            "a_created_by": user_id,
-            "a_organisation_id": org_id,
+            "a_created_by": g.current_user.id,
+            "a_organisation_id": g.current_user.organization_id,
             "a_make": data["a_make"],
             "a_model": data["a_model"],
             "a_year": data["a_year"],
@@ -61,16 +51,16 @@ class Assets(Resource):
 
 
 class AssetById(Resource):
-    def get(self, org_id, user_id, asset_id):
-        assets = qasset.get_asset_by_id(org_id, asset_id).as_dict()
+    def get(self, asset_id):
+        assets = qasset.get_asset_by_id(g.current_user.organization_id, asset_id).as_dict()
         return jsonify(assets)
-    
-    def put(self, org_id, user_id, asset_id):
+
+    def put(self, asset_id):
         """ Update a asset """
         data = request.get_json()
         data = {k.strip().lower(): v for k, v in data.items()}
 
-        data["a_organisation_id"] = org_id
+        data["a_organisation_id"] = g.current_user.organization_id
 
         result = qasset.update_asset(asset_id, data)
         if not result:
@@ -78,8 +68,8 @@ class AssetById(Resource):
 
         asset = result.as_dict()
         return jsonify(asset=asset)
-  
-    def delete(self, org_id, user_id, asset_id):
+
+    def delete(self, asset_id):
         """ Delete a asset """
         result = qasset.delete_asset(asset_id)
         if result:
@@ -106,7 +96,9 @@ class AssetStatus(Resource):
     
 
 class FleetPerformance(Resource):
-    def get(self, org_id):
+    def get(self):
+        org_id = g.current_user.organization_id
+        print("Organization ID:", org_id)  # Debugging line
         # Get query parameters for date filtering
         start_date = request.args.get("start_date")  # Format: 'YYYY-MM-DD'
         end_date = request.args.get("end_date")  # Format: 'YYYY-MM-DD'
@@ -219,10 +211,10 @@ class FleetPerformance(Resource):
 
 
 class IncomeByAssetId(Resource):
-    def get(self, org_id, user_id, asset_id):
+    def get(self, asset_id):
         invoices = models.TripIncome.query.filter(
             and_(
-                models.TripIncome.ti_organization_id == org_id,
+                models.TripIncome.ti_organization_id == g.current_user.organization_id,
                 models.TripIncome.ti_asset_id.isnot(None),
                 models.TripIncome.ti_asset_id == asset_id,
                 models.TripIncome.ti_status != "deleted"
@@ -230,14 +222,14 @@ class IncomeByAssetId(Resource):
         ).all()
         invoices = [invoice.as_dict() for invoice in invoices]
         return jsonify(invoices=invoices)
-    
-    def post(self, org_id, user_id, asset_id):
+
+    def post(self, asset_id):
         """ Add a invoice """
         request_data = request.get_json()
 
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_client_id": request_data["client_id"],
             "ti_asset_id": asset_id,
             "ti_type": request_data["ti_type"],
@@ -250,13 +242,13 @@ class IncomeByAssetId(Resource):
         invoice = result.as_dict()
         return jsonify(invoice=invoice)
     
-    def put(self, org_id, user_id, client_id):
+    def put(self, client_id):
         """ Update a client """
         request_data = request.get_json()
 
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_client_id": client_id,
             "ti_amount": request_data["ti_amount"],
             "ti_date": request_data["ti_date"],
@@ -269,10 +261,10 @@ class IncomeByAssetId(Resource):
 
 
 class ExpenseByAssetId(Resource):
-    def get(self, org_id, user_id, asset_id):
+    def get(self, asset_id):
         expenses = models.TripExpense.query.filter(
             and_(
-                models.TripExpense.te_organization_id == org_id,
+                models.TripExpense.te_organization_id == g.current_user.organization_id,
                 models.TripExpense.te_asset_id.isnot(None),
                 models.TripExpense.te_asset_id == asset_id,
                 models.TripExpense.te_status != "deleted"
@@ -282,12 +274,12 @@ class ExpenseByAssetId(Resource):
         expenses = [expense.as_dict() for expense in expenses]
         return jsonify(expenses=expenses)
     
-    def post(self, org_id, user_id, asset_id):
+    def post(self, asset_id):
         """ Add asset expense """
         request_data = request.get_json()
         data = {
-            "te_created_by": user_id,
-            "te_organization_id": org_id,
+            "te_created_by": g.current_user.id,
+            "te_organization_id": g.current_user.organization_id,
             "te_trip_id": request_data["trip_id"],
             "te_asset_id": asset_id,
             "te_operator_id": request_data["te_operator_id"],
@@ -298,14 +290,14 @@ class ExpenseByAssetId(Resource):
         result = qasset.add_asset_expense(asset_id, data)
         asset_expense = result.as_dict()
         return jsonify(asset_expense=asset_expense)
-    
-    def put(self, org_id, user_id, asset_id):
+
+    def put(self, asset_id):
         """ Update a client """
         request_data = request.get_json()
 
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_asset_id": asset_id,
             "ti_amount": request_data["ti_amount"],
             "ti_date": request_data["ti_date"],
@@ -318,7 +310,7 @@ class ExpenseByAssetId(Resource):
 
 
 class AssetPerformance(Resource):
-    def get(self, org_id):
+    def get(self):
         report_type = request.args.get("report_type")
         if not report_type:
             report_type = "monthly"
@@ -333,103 +325,14 @@ class AssetPerformance(Resource):
         elif report_type == "monthly":
             start_date = end_date - relativedelta(months=1)
 
-        report = qasset.get_asset_performance(org_id, start_date, end_date)
+        report = qasset.get_asset_performance(g.current_user.organization_id, start_date, end_date)
         return jsonify(report)
     
 
-api_assets.add_resource(Assets, '/<org_id>/<user_id>/')
-api_assets.add_resource(AssetById, '/<org_id>/<user_id>/<asset_id>/')
+api_assets.add_resource(Assets, '/')
+api_assets.add_resource(AssetById, '/<asset_id>/')
 api_assets.add_resource(AssetStatus, '/status')
-api_assets.add_resource(AssetPerformance, '/asset_performance/<org_id>/')
-api_assets.add_resource(FleetPerformance, '/fleet_performance/<org_id>/')
-api_assets.add_resource(IncomeByAssetId, '/income/<org_id>/<user_id>/<asset_id>/')
-api_assets.add_resource(ExpenseByAssetId, '/expense/<org_id>/<user_id>/<asset_id>/')
-
-@bp.route('/')
-def get_assets():
-    assets = Asset.query.all()
-    assets_list = [asset.as_dict() for asset in assets]
-    return jsonify(assets_list)
-
-@bp.route('/<assetId>', methods=['GET'])
-def get_asset(assetId):
-    asset = Asset.query(Asset).filter(Asset.id == assetId).first()
-    return jsonify(asset)
-
-
-@bp.route('/status')
-def get_assets_status():
-    assets_status = Status.query.all()
-    status_list = [status.as_dict() for status in assets_status]
-    return jsonify(status_list)
-
-
-def get_asset_column(asset_id, column_name):
-    asset = Asset.query.get(asset_id)
-    return getattr(asset, column_name, None) if asset else None
-
-
-@bp.route('/create', methods=['POST'])
-def add_asset():
-    try:
-        data = request.json
-        files = request.files
-
-        required_fields = [
-            "a_name", 'a_make', 'a_model', 'a_year', 'a_license_plate',
-             'a_engine_size', 'a_tank_size', 'a_fuel_type', 'a_cost',
-            'a_value', 'a_status',  'a_efficiency_rate', 'a_created_by',
-            'a_organisation_id'
-        ]
-        data = {k.strip().lower(): v for k, v in data.items()}
-        required_fields_normalized = [field.lower() for field in required_fields]
-        missing_fields = [field for field in required_fields_normalized if field not in data]
-
-        if missing_fields:
-            return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
-
-        new_asset = Asset(
-            a_name=data.get('a_name', ''),
-            a_make=data.get('a_make', ''),
-            a_model=data.get('a_model', ''),
-            a_year=int(data.get('a_year', 0)),
-            a_license_plate=data.get('a_license_plate', ''),
-            a_type=data.get('a_type', ''),        
-            a_chasis_no=data.get('a_chasis_no', ''),
-            a_msrp=float(data.get('a_msrp', 0)),
-            a_engine_size=float(data.get('a_engine_size', 0)),
-            a_tank_size=float(data.get('a_tank_size', 0)),
-            a_efficiency_rate=float(data.get('a_efficiency_rate', 0)),
-            a_fuel_type=data.get('a_fuel_type', ''),
-            a_cost=float(data.get('a_cost', 0)),
-            a_value=float(data.get('a_value', 0)),
-            a_depreciation_rate=float(data.get('a_depreciation_rate', 0)),
-            a_apreciation_rate=float(data.get('a_apreciation_rate', 0)),
-            a_accumulated_dep=float(data.get('a_accumulated_dep', 0)),
-            a_status=data.get('a_status', ''),
-            a_created_by=data.get('a_created_by', ''),
-            a_organisation_id=data.get('a_organisation_id', ''),
-            a_attached_card=data.get('a_attached_card')
-        ) 
-        if 'a_image' in files:
-            image_file = files['a_image']
-            image_filename = secure_filename(image_file.filename)
-            image_path = os.path.join('images/assets', image_filename)
-            image_file.save(image_path)
-            new_asset.a_image = image_path
-
-        for attachment in ['a_attachment1', 'a_attachment2', 'a_attachment3']:
-            if attachment in files:
-                file = files[attachment]
-                filename = secure_filename(file.filename)
-                file_path = os.path.join('images/assets', filename)
-                file.save(file_path)
-                setattr(new_asset, attachment, file_path)
-
-        db.session.add(new_asset)
-        db.session.commit()
-
-        return jsonify(new_asset.as_dict()), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+api_assets.add_resource(AssetPerformance, '/asset_performance/')
+api_assets.add_resource(FleetPerformance, '/fleet_performance/')
+api_assets.add_resource(IncomeByAssetId, '/income/<asset_id>/')
+api_assets.add_resource(ExpenseByAssetId, '/expense/<asset_id>/')

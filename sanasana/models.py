@@ -3,6 +3,20 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 
+# Association table between users and roles
+user_roles = db.Table(
+    "user_roles",
+    db.Column("user_id", db.Integer, db.ForeignKey("users.users.id"), primary_key=True),
+    db.Column("role_id", db.Integer, db.ForeignKey("users.roles.id"), primary_key=True)
+)
+
+# Association table between roles and permissions
+role_permissions = db.Table(
+    "role_permissions",
+    db.Column("role_id", db.Integer, db.ForeignKey("users.roles.id"), primary_key=True),
+    db.Column("permission_id", db.Integer, db.ForeignKey("users.permissions.id"), primary_key=True)
+)
+
 
 class Organization(db.Model):
     __tablename__ = 'organization'  # Name of the table
@@ -29,7 +43,6 @@ class Organization(db.Model):
 
     def __repr__(self):
         return f'<Organization {self.org_name}>'
-    
     
     def as_dict(self):
         result = {}
@@ -65,14 +78,26 @@ class User(db.Model):
     is_deleted = db.Column(db.Boolean, default=False, nullable=True)
     is_organization_admin = db.Column(db.Boolean, default=False, nullable=True)
     is_organization_owner = db.Column(db.Boolean, default=False, nullable=True)
-    
+
+    roles = db.relationship(
+        "Role",
+        secondary=user_roles,
+        back_populates="users"
+    )
+
+    def has_role(self, role_name):
+        return any(role.name == role_name for role in self.roles)
+
+    def has_permission(self, permission_name):
+        return any(
+            permission.name == permission_name
+            for role in self.roles
+            for permission in role.permissions
+        )  
 
     def __repr__(self):
         return f'<User {self.username}>'
-    
-    # def as_dict(self):
-    #     return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
+        
     def as_dict(self):
         result = {}
         for column in self.__table__.columns:
@@ -82,6 +107,53 @@ class User(db.Model):
             else:
                 result[column.name] = value
         return result
+    
+
+class Role(db.Model):
+    __tablename__ = "roles"
+    __table_args__ = {'schema': 'users'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.String(255))
+
+    users = db.relationship(
+        "User",
+        secondary=user_roles,
+        back_populates="roles"
+    )
+    permissions = db.relationship(
+        "Permission",
+        secondary=role_permissions,
+        back_populates="roles"
+    )
+
+    def __repr__(self):
+        return f'<Role {self.name}>'
+    
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
+
+class Permission(db.Model):
+    __tablename__ = "permissions"
+    __table_args__ = {'schema': 'users'}  # Specify the schema
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.String(255))
+
+    roles = db.relationship(
+        "Role",
+        secondary=role_permissions,
+        back_populates="permissions"
+    )
+
+    def __repr__(self):
+        return f'<Permission {self.name}>'
+    
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
 
 class Asset(db.Model):
@@ -126,7 +198,7 @@ class Asset(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
+
 
 class Status(db.Model):
     __tablename__ = 'status'  # Name of the table
@@ -142,7 +214,7 @@ class Status(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
+
 
 class Operator(db.Model):
     __tablename__ = 'operators'  # Name of the table
@@ -202,7 +274,7 @@ class Ostatus(db.Model):
     # This method converts the model instance to a dictionary
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
+
 
 class Trip(db.Model):
     __tablename__ = 'trips'  # Name of the table
@@ -356,7 +428,7 @@ class Card(db.Model):
 
     def as_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
+
 
 class Fuel_request(db.Model):
     __tablename__ = 'fuel_request'  # Name of the table
@@ -478,7 +550,7 @@ class TripIncome(db.Model):
         result['t_status'] = self.trip.t_status if self.trip else None
         result['c_name'] = self.client.c_name if self.client else None
         return result
-    
+  
 
 class TripExpense(db.Model):
     __tablename__ = 'trip_expense'  # Name of the table
@@ -580,3 +652,5 @@ class Notification(db.Model):
         return {
             column.name: getattr(self, column.name) for column in self.__table__.columns
         }
+
+
