@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from flask_restful import Api, Resource
 from sanasana.query import maintenances as qmaintenance
 from sanasana.models import Maintenance
