@@ -6,7 +6,7 @@ from datetime import datetime
 # Association table between users and roles
 user_roles = db.Table(
     "user_roles",
-    db.Column("user_id", db.Integer, db.ForeignKey("users.users.id"), primary_key=True),
+    db.Column("user_id", db.String, db.ForeignKey("users.users.id"), primary_key=True),
     db.Column("role_id", db.Integer, db.ForeignKey("users.roles.id"), primary_key=True)
 )
 
@@ -317,12 +317,10 @@ class Trip(db.Model):
     t_start_od_reading = db.Column(db.Float, nullable=True)
     t_start_od_reading_url = db.Column(db.String(200), nullable=True)
 
-
     t_completed_at = db.Column(db.DateTime, nullable=True)
     t_end_od_reading = db.Column(db.Float, nullable=True)
     t_end_od_reading_url = db.Column(db.String(200), nullable=True)
     
-
     t_odometer_reading1 = db.Column(db.Float, nullable=True)
     t_dometer_reading2 = db.Column(db.Float, nullable=True)
     t_dometer_reading3 = db.Column(db.Float, nullable=True)
@@ -341,9 +339,6 @@ class Trip(db.Model):
     def __repr__(self):
         return f'<Trips {self.id}>' 
 
-    # def as_dict(self):
-    #     return {column.name: getattr(self, column.name) for column in self.__table__.columns}
-    
     def as_dict(self):
         result = {}
         for column in self.__table__.columns:
@@ -364,6 +359,28 @@ class Trip(db.Model):
         result['t_income'] = getattr(self, 't_income', 0.0)
         result['t_expense'] = getattr(self, 't_expense', 0.0)
         return result
+    
+
+class Stop(db.Model):
+    __tablename__ = 'stops'  
+    __table_args__ = {'schema': 'assets'}  
+
+    id = db.Column(db.Integer, primary_key=True)
+    s_trip_id = db.Column(db.Integer, db.ForeignKey('assets.trips.id'), nullable=False)
+    s_client_id = db.Column(db.Integer, db.ForeignKey('assets.clients.id'), nullable=True)
+    s_place_id = db.Column(db.String(255), nullable=True)
+    s_place_query = db.Column(db.String(255), nullable=True)
+    s_lat = db.Column(db.Numeric, nullable=True)
+    s_long = db.Column(db.Numeric, nullable=True)
+    s_sequence = db.Column(db.Integer, nullable=True)
+
+    trip = db.relationship('Trip', backref='stops')
+
+    def __repr__(self):
+        return f'<Stop {self.id}>' 
+
+    def as_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
 
 class Odometer_readings(db.Model):
@@ -652,5 +669,4 @@ class Notification(db.Model):
         return {
             column.name: getattr(self, column.name) for column in self.__table__.columns
         }
-
 

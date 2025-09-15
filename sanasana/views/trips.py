@@ -69,8 +69,22 @@ class TripsByOrg(Resource):
             "t_client_id": request_data.get("t_client_id", None)  # Optional field
         }
 
-        result = qtrip.add_trip(data)
-        trip = result.as_dict()
+        trip_result = qtrip.add_trip(data)
+        print('trip_result id', trip_result.id)
+        stops = request_data.get("stops", [])
+        for stop in stops:
+            new_stop = {
+                "s_trip_id": trip_result.id,
+                "s_place_id": stop["s_place_id"],
+                "s_place_query": stop["s_place_query"],
+                "s_lat": stop["s_lat"],
+                "s_long": stop["s_long"],
+                "s_client_id": stop["s_client_id"]
+            }
+            stop_result = qtrip.add_stop(new_stop)
+            print('stop_result', stop_result)
+
+        trip = trip_result.as_dict()
         if trip:
             message_recipient = trip["o_email"]
             user_name = trip["o_name"]
