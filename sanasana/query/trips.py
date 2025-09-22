@@ -101,6 +101,19 @@ def add_trip(data):
     return trip
 
 
+def add_stop(data):
+    stop = models.Stop()
+    stop.s_trip_id = data["s_trip_id"]
+    stop.s_client_id = data.get("s_client_id")
+    stop.s_place_id = data.get("s_place_id")
+    stop.s_place_query = data.get("s_place_query")
+    stop.s_lat = data["s_lat"]
+    stop.s_long = data["s_long"]
+
+    db.session.add(stop)
+    db.session.commit()
+    return stop
+
 def get_trip_by_id(trip_id):
     TripIncomeAlias = aliased(models.TripIncome)
     TripExpenseAlias = aliased(models.TripExpense)

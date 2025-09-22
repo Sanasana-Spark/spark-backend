@@ -1,6 +1,6 @@
 import datetime
 from flask import (
-    Blueprint,  jsonify, request, abort
+    Blueprint,  jsonify, request, abort, g
 )
 from sanasana import models
 from sanasana.query import clients as qclients
@@ -16,21 +16,21 @@ api_clients = Api(bp)
 
 
 class ClientsByOrg(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         """ list all clients """
         clients = models.Client.query.filter_by(
-            c_organization_id=org_id
+            c_organization_id=g.current_user.organization_id
         ).order_by(models.Client.id.desc()).all()
         clients = [client.as_dict() for client in clients]
         return jsonify(clients=clients)
-    
-    def post(self, org_id, user_id):
+
+    def post(self):
         """ Add a client """
         request_data = request.get_json()
 
         data = {
-            "c_created_by": user_id,
-            "c_organization_id": org_id,
+            "c_created_by": g.current_user.id,
+            "c_organization_id": g.current_user.organization_id,
             "c_name": request_data["c_name"],
             "c_email": request_data["c_email"],
             "c_phone": request_data["c_phone"],
@@ -42,10 +42,10 @@ class ClientsByOrg(Resource):
 
 
 class ClientById(Resource):
-    def get(self, org_id, user_id, client_id):
+    def get(self, client_id):
         """ list all clients """
         client = models.Client.query.filter_by(
-            c_organization_id=org_id,
+            c_organization_id=g.current_user.organization_id,
             id=client_id
         ).first()
         if not client:
@@ -53,13 +53,13 @@ class ClientById(Resource):
         client = client.as_dict()
         return jsonify(client=client)
     
-    def put(self, org_id, user_id, client_id):
+    def put(self, client_id):
         """ Update a client """
         request_data = request.get_json()
 
         data = {
-            "c_created_by": user_id,
-            "c_organization_id": org_id,
+            "c_created_by": g.current_user.id,
+            "c_organization_id": g.current_user.organization_id,
         }
 
         if "c_name" in request_data:
@@ -75,7 +75,7 @@ class ClientById(Resource):
         client = result.as_dict()
         return jsonify(client=client)   
 
-    def delete(self, org_id, user_id, client_id):
+    def delete(self, client_id):
         """ Delete a client """
         result = qclients.delete_client(client_id)
         client = result.as_dict()
@@ -83,22 +83,22 @@ class ClientById(Resource):
 
 
 class Invoices(Resource):
-    def get(self, org_id, user_id):
+    def get(self):
         """ list all clients invoice """
         invoices = models.TripIncome.query.filter_by(
-            ti_organization_id=org_id
+            ti_organization_id=g.current_user.organization_id
         ).order_by(models.TripIncome.id.desc()).all()
         invoices = [invoice.as_dict() for invoice in invoices]
         return jsonify(invoices=invoices)
      
 
 class InvoicesByClientId(Resource):
-    def get(self, org_id, user_id, client_id):
+    def get(self, client_id):
         """ list all clients """
 
         invoices = models.TripIncome.query.filter(
             and_(
-                models.TripIncome.ti_organization_id == org_id,
+                models.TripIncome.ti_organization_id == g.current_user.organization_id,
                 models.TripIncome.ti_client_id == client_id,
                 models.TripIncome.ti_status != "deleted"
             )
@@ -106,13 +106,13 @@ class InvoicesByClientId(Resource):
         invoices = [invoice.as_dict() for invoice in invoices]
         return jsonify(invoices=invoices)
     
-    def post(self, org_id, user_id, client_id):
+    def post(self, client_id):
         """ Add a client """
         request_data = request.get_json()
 
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_client_id": client_id,
             "ti_type": request_data["ti_type"],
             "ti_description" : request_data["ti_description"],
@@ -123,14 +123,14 @@ class InvoicesByClientId(Resource):
         result = qclients.add_invoice(client_id, data)
         invoice = result.as_dict()
         return jsonify(invoice=invoice)
-    
-    def put(self, org_id, user_id, client_id):
+
+    def put(self, client_id):
         """ Update a client """
         request_data = request.get_json()
 
         data = {
-            "ti_created_by": user_id,
-            "ti_organization_id": org_id,
+            "ti_created_by": g.current_user.id,
+            "ti_organization_id": g.current_user.organization_id,
             "ti_client_id": client_id,
             "ti_amount": request_data["ti_amount"],
             "ti_date": request_data["ti_date"],
@@ -142,7 +142,7 @@ class InvoicesByClientId(Resource):
         return jsonify(invoice=invoice)
 
 
-api_clients.add_resource(ClientsByOrg, '/<org_id>/<user_id>/')
-api_clients.add_resource(ClientById, '/<org_id>/<user_id>/<client_id>/')
-api_clients.add_resource(Invoices, '/invoices/<org_id>/<user_id>/')
-api_clients.add_resource(InvoicesByClientId, '/invoices/<org_id>/<user_id>/<client_id>/')
+api_clients.add_resource(ClientsByOrg, '/')
+api_clients.add_resource(ClientById, '/<client_id>/')
+api_clients.add_resource(Invoices, '/invoices/')
+api_clients.add_resource(InvoicesByClientId, '/invoices/<client_id>/')
