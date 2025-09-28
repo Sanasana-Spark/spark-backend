@@ -443,6 +443,17 @@ class TripLocation(Resource):
         return jsonify(trip_locations=trip_locations)
 
 
+class TripStops(Resource):
+    def get(self, trip_id):
+        """ Get stops by trip id """
+        stops = models.Stop.query.filter_by(
+            s_trip_id=trip_id
+        ).order_by(models.Stop.id).all()
+        
+        stops_list = [stop.as_dict() for stop in stops]
+        return jsonify(stops_list)
+
+
 api_trips.add_resource(TripsByOrg, '/')
 api_trips.add_resource(TripsByOrgOperator, '/operator/')
 api_trips.add_resource(TripsByAsset, '/by_asset/')
@@ -458,3 +469,4 @@ api_trips.add_resource(TripIncomeByAsset, '/asset_income/<asset_id>/')
 api_trips.add_resource(TripExpense, '/expense/<trip_id>/')
 api_trips.add_resource(TripExpenseByAsset, '/asset_expense/<asset_id>/')
 api_trips.add_resource(TripLocation, '/location/<trip_id>/')
+api_trips.add_resource(TripStops, '/stops/<trip_id>/')
