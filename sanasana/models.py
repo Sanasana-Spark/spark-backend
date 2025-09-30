@@ -335,6 +335,8 @@ class Trip(db.Model):
     t_carbon_emission = db.Column(db.Float, nullable=True)
     operator = db.relationship('Operator', backref='trips')
     asset = db.relationship('Asset', backref='trips')
+    stops = db.relationship("Stop", backref="trip", cascade="all, delete-orphan", lazy=True)
+
 
     def __repr__(self):
         return f'<Trips {self.id}>' 
@@ -373,8 +375,6 @@ class Stop(db.Model):
     s_lat = db.Column(db.Numeric, nullable=True)
     s_long = db.Column(db.Numeric, nullable=True)
     s_sequence = db.Column(db.Integer, nullable=True)
-
-    trip = db.relationship('Trip', backref='stops')
 
     def __repr__(self):
         return f'<Stop {self.id}>' 

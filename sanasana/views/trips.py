@@ -446,12 +446,9 @@ class TripLocation(Resource):
 class TripStops(Resource):
     def get(self, trip_id):
         """ Get stops by trip id """
-        stops = models.Stop.query.filter_by(
-            s_trip_id=trip_id
-        ).order_by(models.Stop.id).all()
-        
-        stops_list = [stop.as_dict() for stop in stops]
-        return jsonify(stops_list)
+        stops = qtrip.get_trip_stops_by_id(trip_id)
+        stops_list = [stop.as_dict() for stop in stops] if stops else []
+        return jsonify(stops=stops_list)
 
 
 api_trips.add_resource(TripsByOrg, '/')
