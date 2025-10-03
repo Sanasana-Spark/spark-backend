@@ -17,7 +17,7 @@ def create_app(config_class=Config):
     CORS(
         app,
         supports_credentials=True,
-        resources={r"/*": {"origins": ["http://localhost:3000"]}},  # your frontend
+        resources={r"/*": {"origins": ["http://localhost:3000", "https://sanasana.netlify.app/", "https://sanasanapwa.netlify.app/"]}},  # your frontend
         expose_headers=["Authorization"]
         )
     app.config.from_object(config_class)
