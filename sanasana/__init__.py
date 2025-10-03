@@ -18,7 +18,8 @@ def create_app(config_class=Config):
         app,
         supports_credentials=True,
         resources={r"/*": {"origins": ["http://localhost:3000", "https://sanasana.netlify.app/", "https://sanasanapwa.netlify.app/"]}},  # your frontend
-        expose_headers=["Authorization", "Content-Type"],
+        allow_headers=["Authorization", "Content-Type"],  # <— important
+        expose_headers=["Authorization"],
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]  # allow OPTIONS explicitly
         )
     app.config.from_object(config_class)
