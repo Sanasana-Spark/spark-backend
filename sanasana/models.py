@@ -358,6 +358,17 @@ class Trip(db.Model):
         result['a_license_plate'] = self.asset.a_license_plate if self.asset else None
         result['a_fuel_type'] = self.asset.a_fuel_type if self.asset else None
         result['a_efficiency_rate'] = self.asset.a_efficiency_rate if self.asset else None
+        result['stops'] = [
+            {
+                "id": stop.id,
+                "s_client_id": stop.s_client_id,
+                "s_place_id": stop.s_place_id,
+                "s_place_query": stop.s_place_query,
+                "s_lat": stop.s_lat,
+                "s_long": stop.s_long,
+            }
+            for stop in self.stops
+        ]
         result['t_income'] = getattr(self, 't_income', 0.0)
         result['t_expense'] = getattr(self, 't_expense', 0.0)
         return result
