@@ -1,6 +1,6 @@
 import datetime
 from flask import (
-    Blueprint,  jsonify, request, abort
+    Blueprint,  jsonify, request, abort, g
 )
 from werkzeug.utils import secure_filename
 import os
@@ -59,25 +59,27 @@ class AutoReminderNotifications(Resource):
 
 
 class NotificationsByUser(Resource):
-    def get(self, user_id):
+    def get(self):
         """ Get all notifications for a specific user """
+        user_id = g.current_user.id 
         status = request.args.get('status', 'all')
         notifications = qnotifications.get_notifications_by_user(user_id, status)
         notifications = [notification.as_dict() for notification in notifications]
         return jsonify(notifications=notifications)
 
-    def post(self, user_id):
+    def post(self):
         """ Create a new notification for a specific user """
+
         data = request.json
         if not data:
             abort(400, 'No input data provided')
 
-        notification = qnotifications.create_notification(user_id, **data)
+        notification = qnotifications.create_notification(g.current_user.id, **data)
         return jsonify(notification.as_dict())
 
 
 class UpdateNotificationStatus(Resource):
-    def post(self, user_id):
+    def post(self):
         """ Update the status of a notification """
         notification_id = request.json.get('notification_id')
         status = request.json.get('status')
@@ -96,13 +98,13 @@ class UpdateNotificationStatus(Resource):
 
 
 class EmailNotifications(Resource):
-    def post(self, admin_user_id):
+    def post(self):
         """ Trigger sending email notifications """
         qnotifications.email_notifications()
-        return jsonify(success=True)
+        return jsonify(success=True)    
 
 
-api_notifications.add_resource(AutoReminderNotifications, '/<user_id>/auto-reminder/')
-api_notifications.add_resource(NotificationsByUser, '/<user_id>/')
-api_notifications.add_resource(UpdateNotificationStatus, '/<user_id>/update-status/')
-api_notifications.add_resource(EmailNotifications, '/<admin_user_id>/send-emails/')
+api_notifications.add_resource(AutoReminderNotifications, '/auto-reminder/')
+api_notifications.add_resource(NotificationsByUser, '/')
+api_notifications.add_resource(UpdateNotificationStatus, '/update-status/')
+api_notifications.add_resource(EmailNotifications, '/send-emails/')

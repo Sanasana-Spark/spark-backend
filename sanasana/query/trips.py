@@ -3,12 +3,12 @@ from sanasana import models
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from sanasana.models import Trip
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, joinedload
 import sanasana.query.fuel as qfuel_request
 
 
 def get_all_trips():
-    return Trip.query.all()
+    return Trip.query.options(joinedload(Trip.stops)).all()
 
 
 def get_specific_trips(state, org_id):
@@ -101,6 +101,24 @@ def add_trip(data):
     return trip
 
 
+def add_stop(data):
+    stop = models.Stop()
+    stop.s_trip_id = data["s_trip_id"]
+    stop.s_client_id = data.get("s_client_id")
+    stop.s_place_id = data.get("s_place_id")
+    stop.s_place_query = data.get("s_place_query")
+    stop.s_lat = data["s_lat"]
+    stop.s_long = data["s_long"]
+
+    db.session.add(stop)
+    db.session.commit()
+    return stop
+
+
+def get_all_stops():
+    return models.Stop.query.all()
+
+
 def get_trip_by_id(trip_id):
     TripIncomeAlias = aliased(models.TripIncome)
     TripExpenseAlias = aliased(models.TripExpense)
@@ -113,6 +131,8 @@ def get_trip_by_id(trip_id):
         TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
     ).outerjoin(
         TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+    ).options(
+        joinedload(models.Trip.stops)
     ).filter(
         models.Trip.id == trip_id
     ).group_by(
@@ -138,6 +158,8 @@ def get_trip_by_org(org_id):
         TripIncomeAlias, models.Trip.id == TripIncomeAlias.ti_trip_id
     ).outerjoin(
         TripExpenseAlias, models.Trip.id == TripExpenseAlias.te_trip_id
+    ).options(
+        joinedload(models.Trip.stops)
     ).filter(
         models.Trip.t_organization_id == org_id
     ).group_by(
@@ -154,21 +176,21 @@ def get_trip_by_org(org_id):
 
 
 def get_trip_by_user(org_id, user_id):  
-    return models.Trip.query.filter_by(
+    return models.Trip.query.options(joinedload(models.Trip.stops)).filter_by(
         t_organization_id=org_id,
         t_operator_id=user_id
         ).order_by(models.Trip.id.desc()).all()
 
 
 def get_trip_by_status(org_id, t_status):
-    act = models.Trip.query.filter_by(
-     t_organization_id=org_id, t_status=t_status
+    act = models.Trip.query.options(joinedload(models.Trip.stops)).filter_by(
+        t_organization_id=org_id, t_status=t_status
     ).order_by(models.Trip.t_created_at.desc()).all()
     return act
 
 
 def get_trip_by_id_status(trip_id, t_status):
-    act =models.Trip.query.filter_by(
+    act = models.Trip.query.options(joinedload(models.Trip.stops)).filter_by(
         id=trip_id, t_status=t_status
     ).first()
     return act
@@ -238,6 +260,7 @@ def add_odometer_reading(data):
     db.session.commit()
     return odometer_reading
 
+
 def add_drivers_location(data):
     drivers_location = models.Odometer_readings()
     for key, value in data.items():
@@ -282,3 +305,12 @@ def get_trip_location_by_id(trip_id):
     if not trip:
         return None
     return trip
+
+
+def get_trip_stops_by_id(trip_id):
+    stops = models.Stop.query.filter_by(
+        s_trip_id=trip_id
+    ).order_by(models.Stop.id.asc()).all()
+    if not stops:
+        return None
+    return stops

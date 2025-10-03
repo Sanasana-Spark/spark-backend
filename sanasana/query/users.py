@@ -2,6 +2,7 @@ from sanasana import db
 from sanasana.models import User
 from sanasana import models
 
+
 def get_user_by_id(org_id, id):
     return User.query.filter_by(
         id=id, organization_id=org_id).first()
@@ -13,6 +14,7 @@ def get_users_by_org(org_id):
 
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
+
 
 def add_user(data):
 
