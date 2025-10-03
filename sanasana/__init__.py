@@ -30,7 +30,7 @@ def create_app(config_class=Config):
     @app.before_request
     def load_current_user():
         if request.method == "OPTIONS":
-            return None  # let Flask-CORS handle the preflight
+            return "", 200  # Allow OPTIONS requests to pass through
      
         from .models import User
         from .query.user_management import verify_clerk_token
