@@ -314,3 +314,86 @@ def get_trip_stops_by_id(trip_id):
     if not stops:
         return None
     return stops
+
+
+def get_trips_count_by_category(org_id, start_date=None, end_date=None):
+    now = datetime.utcnow()
+    start_date = start_date or datetime(now.year, now.month, 1)
+    end_date = end_date or now
+
+    # Get counts grouped by status
+    results = (
+        db.session.query(
+            models.Trip.t_status,
+            func.count(models.Trip.id).label("count")
+        )
+        .filter(
+            models.Trip.t_organization_id == org_id,
+            models.Trip.t_created_at >= start_date,
+            models.Trip.t_created_at <= end_date,
+        )
+        .group_by(models.Trip.t_status)
+        .all()
+    )
+
+    # Convert grouped results into a dictionary
+    trips_count_by_category = {status: count for status, count in results}
+
+    # Add total count ("all")
+    total_count = sum(trips_count_by_category.values())
+    trips_count_by_category["all"] = total_count
+
+    return trips_count_by_category
+
+
+def get_trips_expense_by_category(org_id, start_date=None, end_date=None):
+    now = datetime.utcnow()
+    start_date = start_date or datetime(now.year, now.month, 1)
+    end_date = end_date or now
+
+    results = (
+        db.session.query(
+            models.TripExpense.te_type,
+            func.sum(models.TripExpense.te_amount).label("amount")
+        )
+        .filter(
+            models.TripExpense.te_organization_id == org_id,
+            models.TripExpense.te_created_at >= start_date,
+            models.TripExpense.te_created_at <= end_date,
+        )
+        .group_by(models.TripExpense.te_type)
+        .all()
+    )
+
+    trips_expense_by_category = {type: amount for type, amount in results}
+    total_count = sum(trips_expense_by_category.values())
+    trips_expense_by_category["all"] = total_count
+
+    return trips_expense_by_category
+
+
+def get_trips_income_by_category(org_id, start_date=None, end_date=None):
+    now = datetime.utcnow()
+    start_date = start_date or datetime(now.year, now.month, 1)
+    end_date = end_date or now
+
+    results = (
+        db.session.query(
+            models.TripIncome.ti_type,
+            func.sum(models.TripIncome.ti_amount).label("amount")
+        )
+        .filter(
+            models.TripIncome.ti_organization_id == org_id,
+            models.TripIncome.ti_created_at >= start_date,
+            models.TripIncome.ti_created_at <= end_date,
+        )
+        .group_by(models.TripIncome.ti_type)
+        .all()
+    )
+
+    trips_income_by_category = {type: amount for type, amount in results}
+    total_count = sum(trips_income_by_category.values())
+    trips_income_by_category["all"] = total_count
+
+    return trips_income_by_category
+

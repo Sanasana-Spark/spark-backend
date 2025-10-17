@@ -34,6 +34,42 @@ class DashboardSummary(Resource):
             "carbonReduction": carbonReduction
         }
         return response, 200
+    
+
+class TripCountByCategory(Resource):
+    def get(self):
+        org_id = g.current_user.organization_id
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        trips = qtrip.get_trips_count_by_category(
+            org_id, start_date=start_date, end_date=end_date
+            )
+        return jsonify(trips)
+    
+
+class TripsExpenseByCategory(Resource):
+    def get(self):
+        org_id = g.current_user.organization_id
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        expense = qtrip.get_trips_expense_by_category(
+            org_id, start_date=start_date, end_date=end_date
+            )
+        return jsonify(expense)
+
+   
+class TripsIncomeByCategory(Resource):
+    def get(self):
+        org_id = g.current_user.organization_id
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        income = qtrip.get_trips_income_by_category(
+            org_id, start_date=start_date, end_date=end_date
+            )
+        return jsonify(income)
 
 
 api_summaries.add_resource(DashboardSummary, '/')
+api_summaries.add_resource(TripCountByCategory, '/trip-count-summary/')
+api_summaries.add_resource(TripsExpenseByCategory, '/trip-expense-summary/')
+api_summaries.add_resource(TripsIncomeByCategory, '/trip-income-summary/')
