@@ -69,7 +69,17 @@ class TripsIncomeByCategory(Resource):
         return jsonify(income)
 
 
+class TripsSummaryLast7Days(Resource):
+    def get(self):
+        org_id = g.current_user.organization_id
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        summary = qtrip.get_trips_summary_last7days( org_id, start_date=start_date, end_date=end_date)
+        return jsonify(summary)
+
+
 api_summaries.add_resource(DashboardSummary, '/')
 api_summaries.add_resource(TripCountByCategory, '/trip-count-summary/')
 api_summaries.add_resource(TripsExpenseByCategory, '/trip-expense-summary/')
 api_summaries.add_resource(TripsIncomeByCategory, '/trip-income-summary/')
+api_summaries.add_resource(TripsSummaryLast7Days, '/last7days-summary/')

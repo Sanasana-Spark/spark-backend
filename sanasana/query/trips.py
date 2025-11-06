@@ -1,7 +1,7 @@
 from sanasana import db
 from sanasana import models
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, cast, Float
 from sanasana.models import Trip
 from sqlalchemy.orm import aliased, joinedload
 import sanasana.query.fuel as qfuel_request
@@ -397,3 +397,77 @@ def get_trips_income_by_category(org_id, start_date=None, end_date=None):
 
     return trips_income_by_category
 
+
+def get_trips_summary_last7days(org_id, start_date=None, end_date=None):
+    today = datetime.utcnow()
+    start_date = start_date or (today - timedelta(days=6))
+    end_date = end_date or today
+
+    # Query trips grouped by date
+    def convert(value):
+        if not value:
+            return 0.0
+        numeric_distance = (
+            value.lower()
+            .replace("km", "")
+            .replace(",", ".")
+            .strip()
+        )
+        return float(numeric_distance)
+    
+    numeric_distance = cast(
+        func.nullif(
+            func.replace(
+                func.replace(
+                    func.lower(func.replace(Trip.t_distance, 'km', '')),
+                    ',',
+                    '.'
+                ),
+                ' ',
+                ''
+            ),
+            ''
+        ),
+        Float
+    )
+    
+    results = (
+        Trip.query
+        .with_entities(
+            func.date(Trip.t_start_date).label('trip_date'),
+            func.count(Trip.id).label('trip_count'),
+            func.sum(numeric_distance).label('total_mileage')
+        )
+        .filter(Trip.t_start_date >= start_date)
+        .filter(Trip.t_start_date <= end_date)
+        .filter(Trip.t_organization_id == org_id)
+        .group_by(func.date(Trip.t_start_date))
+        .order_by(func.date(Trip.t_start_date))
+        .all()
+    )
+
+    # Prepare map
+    summary_map = {
+        r.trip_date: {
+            "trips": r.trip_count,
+            "mileage": float(r.total_mileage or 0)
+        }
+        for r in results
+    }
+    print(summary_map)
+
+    # Fill missing days with zeroes
+    data = []
+    num_days = (end_date - start_date).days + 1
+    for i in range(num_days):
+        date = (start_date + timedelta(days=i)).date()
+        day_label = date.strftime("%a")  # e.g., Mon
+        info = summary_map.get(date, {"trips": 0, "mileage": 0})
+        data.append({
+            "day": day_label,
+            "date": date,
+            "trips": info["trips"],
+            "mileage": info["mileage"]
+        })
+
+    return data
