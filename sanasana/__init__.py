@@ -6,7 +6,7 @@ from config import Config
 from flask_mail import Mail
 import ssl
 
-PUBLIC_ENDPOINTS = {"/assetsssssss", "/public-api"}
+PUBLIC_PREFIXES = ("/public", "/another")
 db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
@@ -36,7 +36,7 @@ def create_app(config_class=Config):
         from .models import User
         from .query.user_management import verify_clerk_token
 
-        if request.path in PUBLIC_ENDPOINTS:
+        if request.path.startswith(PUBLIC_PREFIXES):
             g.current_user = None
             return
         payload = verify_clerk_token()
@@ -58,7 +58,8 @@ def register_blueprints(app):
         clients,
         maintenances,
         reports,
-        notifications
+        notifications,
+        public
     )
 
     app.register_blueprint(assets.bp)
@@ -72,3 +73,4 @@ def register_blueprints(app):
     app.register_blueprint(maintenances.bp)
     app.register_blueprint(reports.bp)
     app.register_blueprint(notifications.bp)
+    app.register_blueprint(public.bp)
