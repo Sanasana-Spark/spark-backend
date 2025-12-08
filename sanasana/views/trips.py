@@ -269,9 +269,11 @@ class Trip_Original_Fuel_Request(Resource):
     def get(self, trip_id):
         """ Get original fuel request by trip id """
         fuel_request = qfuel_request.get_fuel_request_by_trip(trip_id)
-        if not fuel_request:
-            return jsonify({"message": "No fuel request found for this trip"}), 404
-        return jsonify(fuel_request.as_dict())
+        if fuel_request is not None:
+            return jsonify(fuel_request.as_dict())
+        else:
+            return abort(404)
+       
 
 
 class Approve_Request(Resource):
